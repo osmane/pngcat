@@ -13,12 +13,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: transparent;
+    background-color: #000; /* Modal pencerenin arka plan rengiyle uyumlu bir renk */
   }
+
   img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    background-color: #000; /* Resmin etrafındaki potansiyel boşluk için */
   }
 </style>
 </head>
@@ -30,6 +32,32 @@
     const queryParams = new URLSearchParams(window.location.search);
     const imagePath = queryParams.get('imagePath');
     document.getElementById('imageToShow').src = imagePath;
+
+    window.onload = function() {
+      const img = document.getElementById('imageToShow');
+      img.onload = function() {
+        // Resim yüklenince boyutları hesapla
+        const ratio = img.naturalWidth / img.naturalHeight;
+        const windowRatio = window.innerWidth / window.innerHeight;
+        let width, height;
+
+        if (windowRatio > ratio) {
+          height = window.innerHeight;
+          width = height * ratio;
+        } else {
+          width = window.innerWidth;
+          height = width / ratio;
+        }
+
+        // Parent'a gönderilecek mesajı oluştur
+        const message = { width: width, height: height };
+        window.parent.postMessage(message, "*");
+      };
+      // Hemen yüklenme kontrolü yap
+      if (img.complete) {
+        img.onload();
+      }
+    };
   </script>
 </body>
 </html>

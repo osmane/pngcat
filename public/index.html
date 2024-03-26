@@ -39,6 +39,9 @@
         }
         /* Modal Stilleri */
         .modal {
+            /*display: flex;*/
+            justify-content: center; /* Bu, dikey merkezlemeyi sağlar */
+            align-items: center; /* Bu, yatay merkezlemeyi sağlar */
             display: none; /* Varsayılan olarak gizle */
             position: fixed; /* Sabit pozisyon */
             z-index: 1000; /* Z indexi yüksek tutarak diğer içeriklerin üzerinde göster */
@@ -52,11 +55,13 @@
 
         .modal-content {
             background-color: #fefefe;
-            margin: 0 auto; /* Orta kısımda konumlandır ve üst boşluğu kaldır */
+            /*margin: 0 auto; /* Orta kısımda konumlandır ve üst boşluğu kaldır */
+            margin: 0;
+            padding: 0;
             padding: 0; /* İç boşluğu kaldır */
             border: none; /* Kenarlık kaldırıldı */
             width: 90%; /* Genişlik ayarı */
-            height: 90vh; /* Yükseklik ayarı, ekranın %90'ını kaplar */
+            height: 99vh; /* Yükseklik ayarı, ekranın %90'ını kaplar */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -91,7 +96,6 @@
 
     <div id="fileModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
             <iframe id="fileFrame" src="" width="100%" height="600px"></iframe>
             <button onclick="closeModal()">Kapat</button>
         </div>
@@ -290,6 +294,41 @@
                 modal.style.display = 'none';
             }
         }
+
+        window.addEventListener('message', function(event) {
+            const modal = document.getElementById('fileModal');
+            const modalContent = document.querySelector('.modal-content');
+            const iframe = document.getElementById('fileFrame');            
+            const dimensions = event.data;
+
+            // İçerik div'inin ve iframe'in boyutunu ayarla
+            if (iframe && modalContent) {
+                const maxWidth = window.innerWidth * 0.8; // örneğin, ekran genişliğinin %80'i kadar
+                const maxHeight = window.innerHeight * 0.8; // örneğin, ekran yüksekliğinin %80'i kadar
+
+                // Oranları koruyarak maksimum genişlik ve yükseklik değerleri hesapla
+                const ratio = dimensions.width / dimensions.height;
+                let contentWidth, contentHeight;
+
+                if (maxWidth / maxHeight > ratio) {
+                    contentHeight = maxHeight;
+                    contentWidth = contentHeight * ratio;
+                } else {
+                    contentWidth = maxWidth;
+                    contentHeight = contentWidth / ratio;
+                }
+
+                modalContent.style.width = `${contentWidth}px`;
+                modalContent.style.height = `${contentHeight}px`;
+                modalContent.style.display = 'flex';
+                modalContent.style.flexDirection = 'column';
+                modalContent.style.justifyContent = 'center';
+                modalContent.style.alignItems = 'center';
+
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+            }
+        }, false);
 
         // İlk arama alanını başlatılırken ekleyelim
         addNewSearch();
