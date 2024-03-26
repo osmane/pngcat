@@ -207,8 +207,9 @@
                 if (result.error) {
                     resultElement.innerHTML = `Hata: ${result.error}`;
                 } else {
-                    const fileListHtml = result.movedFilesPaths.map(filePath => {
-                        return `<li><a href="#" class="file-link" data-filepath="/file/${encodeURIComponent(filePath)}">${filePath}</a></li>`;
+                    const fileListHtml = result.movedFiles.map(file => {
+                        // Dosya yolu metnini ve dosya için oluşturulan benzersiz linki kullan
+                        return `<li><a href="#" class="file-link" data-filepath="/file/${file.fileId}">${file.filePath}</a></li>`;
                     }).join('');
 
                     resultElement.innerHTML = `

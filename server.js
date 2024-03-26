@@ -35,12 +35,19 @@ app.post('/process-files', (req, res) => {
                             try {
                                 const result = JSON.parse(line.replace('SEND:', '').trim());
                                 console.log('the SEND line is:', line);
-                                results.push({ 
+                                results.push({
                                     id, 
                                     totalMoved: result.totalMoved, 
                                     totalErrors: result.totalErrors, 
-                                    movedFilesPaths: result.movedFilesPaths // Doğrudan dosya yollarını kullan
-                                });                                
+                                    movedFiles: result.movedFilesPaths.map(filePath => {
+                                        const fileId = generateSecureId();
+                                        fileAccessMap[fileId] = filePath; // Dosya yolunu sakla
+                                        return {
+                                            fileId: fileId, // Dosya için benzersiz ID
+                                            filePath: filePath // Gerçek dosya yolu metni
+                                        };
+                                    })  
+                                });                             
                                 resolve();
                             } catch (parseError) {
                                 console.error('Parsing error:', parseError);
@@ -72,25 +79,22 @@ app.post('/process-files', (req, res) => {
         res.json({ results });
     }
 
-    app.get('/file/*', (req, res) => {
-        const filePath = decodeURIComponent(req.params[0]);
-        
-        if (filePath) {
-            res.sendFile(filePath, { root: '/' }, function(err) {
-                if (err) {
-                    res.status(404).send('Dosya bulunamadı veya erişim izni yok.');
-                }
-            });
-        } else {
-            res.status(404).send('Dosya bulunamadı veya erişim izni yok.');
-        }
-    });
+    app.get('/file/:fileId', (req, res) => {
+            const { fileId } = req.params;
+            const filePath = fileAccessMap[fileId];
+            
+            if (filePath) {
+                res.sendFile(filePath);
+            } else {
+                res.status(404).send('Dosya bulunamadı veya erişim izni yok.');
+            }
+        });
 
-    processEachParam().catch(error => {
-        console.error('General file processing error:', error);
-        res.status(500).json({ error: 'General file processing error.' });
+        processEachParam().catch(error => {
+            console.error('General file processing error:', error);
+            res.status(500).json({ error: 'General file processing error.' });
+        });
     });
-});
 
 function generateSecureId() {
     // Basit bir ID üretici, gerçekte daha güvenli bir yöntem kullanılmalı
