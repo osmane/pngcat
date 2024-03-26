@@ -94,7 +94,7 @@
     <button onclick="addNewSearch()">Yeni Arama Ekle</button>
     <button onclick="startProcessing()">İşlemi Başlat</button>
 
-    <div id="fileModal" class="modal">
+    <div id="fileModal" class="modal" style="display: none;">
         <div class="modal-content">
             <iframe id="fileFrame" src="" width="100%" height="600px"></iframe>
             <button onclick="closeModal()">Kapat</button>
@@ -127,6 +127,10 @@
                     <div>
                         <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;">Yeni ikincil Arama Kriteri Ekle</button>
                     </div>
+                        <div>
+                            <label>Dosya Etiketleri:</label>
+                            <input type="text" name="fileTags">
+                        </div>
                     <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Bu Arama Alanını Sil</button>
                     <div class="results" id="results-${searchAreaCount}">İşlem sonuçları burada görünecek.</div>                                    
                 </div>
@@ -264,8 +268,8 @@
 
         function openModal(imagePath) {
             const modal = document.getElementById('fileModal');
-            modal.style.display = 'block'; // Modalı görünür yap
-
+            modal.style.display = 'flex'; // Modalı görünür yap
+            
             const frame = document.getElementById('fileFrame');
             // `iframe`'in src'sini `image-viewer.html` ve sorgu parametresiyle ayarlayın
             frame.src = `image-viewer.html?imagePath=${encodeURIComponent(imagePath)}`;
@@ -296,37 +300,32 @@
         }
 
         window.addEventListener('message', function(event) {
-            const modal = document.getElementById('fileModal');
             const modalContent = document.querySelector('.modal-content');
-            const iframe = document.getElementById('fileFrame');            
+            const iframe = document.getElementById('fileFrame');
             const dimensions = event.data;
 
-            // İçerik div'inin ve iframe'in boyutunu ayarla
             if (iframe && modalContent) {
-                const maxWidth = window.innerWidth * 0.8; // örneğin, ekran genişliğinin %80'i kadar
-                const maxHeight = window.innerHeight * 0.8; // örneğin, ekran yüksekliğinin %80'i kadar
+                // Ekrandaki kullanılabilir alanın %80'ini maksimum genişlik olarak belirle
+                const maxWidthPercent = 80; // % olarak
+                const maxHeightPercent = 100; // Yüksekliği %100 yap
 
                 // Oranları koruyarak maksimum genişlik ve yükseklik değerleri hesapla
                 const ratio = dimensions.width / dimensions.height;
-                let contentWidth, contentHeight;
+                let contentWidthPercent;
 
-                if (maxWidth / maxHeight > ratio) {
-                    contentHeight = maxHeight;
-                    contentWidth = contentHeight * ratio;
-                } else {
-                    contentWidth = maxWidth;
-                    contentHeight = contentWidth / ratio;
-                }
+                // Yüzde cinsinden genişlik hesapla
+                contentWidthPercent = (window.innerHeight * maxWidthPercent / window.innerWidth) * ratio;
+                contentWidthPercent = Math.min(contentWidthPercent, maxWidthPercent); // Maksimum genişliği aşma
 
-                modalContent.style.width = `${contentWidth}px`;
-                modalContent.style.height = `${contentHeight}px`;
+                modalContent.style.width = `${contentWidthPercent}%`;
+                modalContent.style.height = `${maxHeightPercent}%`;
                 modalContent.style.display = 'flex';
                 modalContent.style.flexDirection = 'column';
                 modalContent.style.justifyContent = 'center';
                 modalContent.style.alignItems = 'center';
 
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
+                iframe.style.width = '100%'; // iframe'in genişliği modal-content'e göre %100 olacak
+                iframe.style.height = '100%'; // iframe'in yüksekliği modal-content'e göre %100 olacak
             }
         }, false);
 
