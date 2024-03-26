@@ -208,9 +208,12 @@
                     resultElement.innerHTML = `Hata: ${result.error}`;
                 } else {
                     // Dosya yollarını kullanarak link oluştur
-                    const fileListHtml = result.movedFilesPaths.map(filePath => {
-                        // filePath'i kullanarak tıklanabilir link oluştur, burada 'file-link' sınıfı ekliyoruz
-                        return `<li><a href="#" class="file-link" data-filepath="${filePath}">${filePath}</a></li>`;
+                    const fileListHtml = result.movedFilesPaths.map(fileId => {
+                        // Burada server.js dosyasında tanımlı /file/:fileId endpoint'ini kullanarak
+                        // dosyalara erişim sağlayacak URL oluşturuyoruz.
+                        const fileUrl = `/file/${fileId}`;
+                        // fileId yerine URL'i kullanarak tıklanabilir link oluştur
+                        return `<li><a href="#" class="file-link" data-filepath="${fileUrl}">${fileUrl}</a></li>`;
                     }).join('');
 
                     resultElement.innerHTML = `
@@ -258,15 +261,7 @@
         function toggleDetails(element) {
             const details = element.nextElementSibling; // <ul> elementini bul
             details.style.display = details.style.display === "none" ? "block" : "none";
-        }
-
-        /*function openModal(filePath) {
-            const modal = document.getElementById('fileModal');
-            modal.style.display = 'block'; // Modalı görünür yap
-
-            const frame = document.getElementById('fileFrame');
-            frame.src = `/file/${encodeURIComponent(filePath)}`; // İçeriği yükleyin
-        }*/
+        }       
 
         function openModal(imagePath) {
             const modal = document.getElementById('fileModal');

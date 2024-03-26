@@ -40,9 +40,9 @@ app.post('/process-files', (req, res) => {
                                     totalMoved: result.totalMoved, 
                                     totalErrors: result.totalErrors, 
                                     movedFilesPaths: result.movedFilesPaths.map(filePath => {
-                                        //const fileId = generateSecureId();
-                                        //fileAccessMap[fileId] = filePath; // Benzersiz ID ile dosya yolunu eşle
-                                        return filePath;
+                                        const fileId = generateSecureId();
+                                        fileAccessMap[fileId] = filePath; // Benzersiz ID ile dosya yolunu eşle
+                                        return fileId;
                                     })  
                                 });
                                 resolve();
