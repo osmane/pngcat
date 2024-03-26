@@ -39,12 +39,8 @@ app.post('/process-files', (req, res) => {
                                     id, 
                                     totalMoved: result.totalMoved, 
                                     totalErrors: result.totalErrors, 
-                                    movedFilesPaths: result.movedFilesPaths.map(filePath => {
-                                        const fileId = generateSecureId();
-                                        fileAccessMap[fileId] = filePath; // Benzersiz ID ile dosya yolunu eşle
-                                        return fileId;
-                                    })  
-                                });
+                                    movedFilesPaths: result.movedFilesPaths // Doğrudan dosya yollarını kullan
+                                });                                
                                 resolve();
                             } catch (parseError) {
                                 console.error('Parsing error:', parseError);
@@ -76,13 +72,15 @@ app.post('/process-files', (req, res) => {
         res.json({ results });
     }
 
-    app.get('/file/:fileId', (req, res) => {
-        const { fileId } = req.params;
-        const filePath = fileAccessMap[fileId];
+    app.get('/file/*', (req, res) => {
+        const filePath = decodeURIComponent(req.params[0]);
         
         if (filePath) {
-            // Doğrudan filePath'i kullan
-            res.sendFile(filePath);
+            res.sendFile(filePath, { root: '/' }, function(err) {
+                if (err) {
+                    res.status(404).send('Dosya bulunamadı veya erişim izni yok.');
+                }
+            });
         } else {
             res.status(404).send('Dosya bulunamadı veya erişim izni yok.');
         }

@@ -207,13 +207,8 @@
                 if (result.error) {
                     resultElement.innerHTML = `Hata: ${result.error}`;
                 } else {
-                    // Dosya yollarını kullanarak link oluştur
-                    const fileListHtml = result.movedFilesPaths.map(fileId => {
-                        // Burada server.js dosyasında tanımlı /file/:fileId endpoint'ini kullanarak
-                        // dosyalara erişim sağlayacak URL oluşturuyoruz.
-                        const fileUrl = `/file/${fileId}`;
-                        // fileId yerine URL'i kullanarak tıklanabilir link oluştur
-                        return `<li><a href="#" class="file-link" data-filepath="${fileUrl}">${fileUrl}</a></li>`;
+                    const fileListHtml = result.movedFilesPaths.map(filePath => {
+                        return `<li><a href="#" class="file-link" data-filepath="/file/${encodeURIComponent(filePath)}">${filePath}</a></li>`;
                     }).join('');
 
                     resultElement.innerHTML = `
@@ -222,7 +217,6 @@
                     `;
                 }
             });
-            // Tıklanabilir linklere event listener eklemek için fonksiyonu çağır
             addClickEventToFileLinks();
         }
 
