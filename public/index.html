@@ -129,7 +129,7 @@
                     </div>
                         <div>
                             <label>Dosya Etiketleri:</label>
-                            <input type="text" name="fileTags">
+                            <input type="text" name="customTags">
                         </div>
                     <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Bu Arama Alanını Sil</button>
                     <div class="results" id="results-${searchAreaCount}">İşlem sonuçları burada görünecek.</div>                                    
@@ -200,11 +200,15 @@
                             subTargetDir: subTargetDirs[i]
                         }));
 
+                        // Dosya etiketlerini topla
+                        const customTags = area.querySelector('[name="customTags"]').value;                        
+
                         return {
                             id: index, // Her arama alanı için benzersiz bir ID
                             searchText: searchText,
                             targetDir: targetDir,
-                            secondaries: secondaries // İkincil arama kriterlerini ve hedef alt klasörleri içeren dizi
+                            secondaries: secondaries, // İkincil arama kriterlerini ve hedef alt klasörleri içeren dizi
+                            customTags: customTags,
                         };
                     });
         }
@@ -306,7 +310,7 @@
 
             if (iframe && modalContent) {
                 // Ekrandaki kullanılabilir alanın %80'ini maksimum genişlik olarak belirle
-                const maxWidthPercent = 80; // % olarak
+                const maxWidthPercent = 99; // % olarak
                 const maxHeightPercent = 100; // Yüksekliği %100 yap
 
                 // Oranları koruyarak maksimum genişlik ve yükseklik değerleri hesapla

@@ -1,0 +1,26 @@
+{
+    // IntelliSense'i kullanmak için VS Code'un Kullanım Kılavuzuna bakın.
+    // Yapılandırmaları ve daha fazla bilgi için: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Node.js Program",
+            "program": "${workspaceFolder}/server.js", // Node.js giriş dosyanızın yolu
+            //"preLaunchTask": "npm: start", // npm start komutunu çalıştıracak
+            "runtimeExecutable": "node",
+            "runtimeArgs": ["--inspect"],
+            //"port": 3000,
+            "console": "integratedTerminal",
+            "outputCapture": "std"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:3000", // Uygulamanızın dinlediği port
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}

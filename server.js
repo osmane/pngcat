@@ -18,11 +18,11 @@ app.post('/process-files', (req, res) => {
     async function processEachParam() {
         console.log('Server searchParams: ' + JSON.stringify(searchParams));
         for (const params of searchParams) {
-            const { id, searchText, targetDir, secondaries } = params;
+            const { id, searchText, targetDir, secondaries, customTags } = params;
             const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|');
             const subTargetDirs = secondaries.map(sec => sec.subTargetDir).join('|');
 
-            const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs];
+            const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, customTags];
 
             await new Promise((resolve, reject) => {
                 const process = spawn('node', ['processFiles.js', ...args], { cwd: path.join(__dirname) });
@@ -90,11 +90,11 @@ app.post('/process-files', (req, res) => {
             }
         });
 
-        processEachParam().catch(error => {
-            console.error('General file processing error:', error);
-            res.status(500).json({ error: 'General file processing error.' });
-        });
+    processEachParam().catch(error => {
+        console.error('General file processing error:', error);
+        res.status(500).json({ error: 'General file processing error.' });
     });
+});
 
 function generateSecureId() {
     // Basit bir ID üretici, gerçekte daha güvenli bir yöntem kullanılmalı
