@@ -128,7 +128,16 @@
                     <div>
                         <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;">Add New Secondary Search Criteria</button>
                     </div>
-                        
+                    <div class="sdTagsContainer" style="display: flex;">
+                        <div class="checkpointCheckClass">
+                            <input type="checkbox" id="checkpointCheckId" name="checkpointCheckName" value="checkpoint">
+                            <label for="checkpointCheckId">Add Checkpoint name as tag</label>
+                        </div>
+                        <div class="loraCheckClass">
+                            <input type="checkbox" id="loraCheckId" name="loraCheckName" value="checkpoint">
+                            <label for="loraCheckId">Add LORAs name as tag</label>
+                        </div>
+                    </div>
                     <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Remove This Search Area</button>
                     <div class="results" id="results-${searchAreaCount}">Processing results will appear here.</div>                                    
                 </div>

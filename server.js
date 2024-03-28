@@ -1,107 +1,107 @@
-const express = require('express');
-const { spawn } = require('child_process');
-const path = require('path');
-const app = express();
-const port = 3000;
+const express = require('express')
+const { spawn } = require('child_process')
+const path = require('path')
+const app = express()
+const port = 3000
 
-// Dosya ID'leri ile dosya yollarını eşleyen objeyi tanımla
-const fileAccessMap = {};
+// Define object mapping file paths to file IDs
+const fileAccessMap = {}
 
-app.use(express.json());
-app.use(express.static('public'));
+app.use(express.json())
+app.use(express.static('public'))
 
 app.post('/process-files', (req, res) => {
-    const { sourceDir, searchParams } = req.body;
+  const { sourceDir, searchParams } = req.body
 
-    let results = [];
+  const results = []
 
-    async function processEachParam() {
-        console.log('Server searchParams: ' + JSON.stringify(searchParams));        
-        for (const params of searchParams) {
-            const { id, searchText, targetDir, secondaries, primaryCustomTags } = params;
-            const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|');
-            const subTargetDirs = secondaries.map(sec => sec.subTargetDir).join('|');
-            const secondaryCustomTags = secondaries.map(sec => sec.secondaryCustomTags).join('|');
+  async function processEachParam() {
+    console.log('Server searchParams: ' + JSON.stringify(searchParams))
+    for (const params of searchParams) {
+      const { id, searchText, targetDir, secondaries, primaryCustomTags } = params
+      const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|')
+      const subTargetDirs = secondaries.map(sec => sec.subTargetDir).join('|')
+      const secondaryCustomTags = secondaries.map(sec => sec.secondaryCustomTags).join('|')
 
-            const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags];
+      const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags]
 
-            await new Promise((resolve, reject) => {
-                const process = spawn('node', ['processFiles.js', ...args], { cwd: path.join(__dirname) });
+      await new Promise((resolve, reject) => {
+        const process = spawn('node', ['processFiles.js', ...args], { cwd: path.join(__dirname) })
 
-                process.stdout.on('data', (data) => {
-                    const output = data.toString();
-                    const lines = output.split('\n');
-                    lines.forEach(line => {
-                        if (line.startsWith('SEND:')) {
-                            try {
-                                const result = JSON.parse(line.replace('SEND:', '').trim());
-                                console.log('the SEND line is:', line);
-                                results.push({
-                                    id, 
-                                    totalMoved: result.totalMoved, 
-                                    totalErrors: result.totalErrors, 
-                                    movedFiles: result.movedFilesPaths.map(filePath => {
-                                        const fileId = generateSecureId();
-                                        fileAccessMap[fileId] = filePath; // Dosya yolunu sakla
-                                        return {
-                                            fileId: fileId, // Dosya için benzersiz ID
-                                            filePath: filePath // Gerçek dosya yolu metni
-                                        };
-                                    })  
-                                });                             
-                                resolve();
-                            } catch (parseError) {
-                                console.error('Parsing error:', parseError);
-                                reject(parseError);
-                            }
-                        } else {
-                            // processFiles.js'den gelen diğer logları göstermek için
-                            console.log(line);                            
-                        }
-                    });
-                });              
-
-                process.stderr.on('data', (data) => {
-                    console.error(`stderr: ${data}`);
-                });
-
-                process.on('close', (code) => {
-                    if (code !== 0) {
-                        reject(new Error(`processFiles.js exited with code ${code}`));
+        process.stdout.on('data', (data) => {
+          const output = data.toString()
+          const lines = output.split('\n')
+          lines.forEach(line => {
+            if (line.startsWith('SEND:')) {
+              try {
+                const result = JSON.parse(line.replace('SEND:', '').trim())
+                console.log('the SEND line is:', line)
+                results.push({
+                  id,
+                  totalMoved: result.totalMoved,
+                  totalErrors: result.totalErrors,
+                  movedFiles: result.movedFilesPaths.map(filePath => {
+                    const fileId = generateSecureId()
+                    fileAccessMap[fileId] = filePath // Store the file path
+                    return {
+                      fileId: fileId, // Unique ID for the file
+                      filePath: filePath // Actual file path text
                     }
-                });
-            }).catch(error => {
-                console.error('File processing error:', error);
-                // Herhangi bir hata durumunda da sonuçları ekle
-                results.push({ id, error: 'File processing error.' });
-            });
-        }
-        // Tüm işlemler tamamlandıktan sonra, elde edilen sonuçları istemciye gönder
-        res.json({ results });
-    }
-
-    app.get('/file/:fileId', (req, res) => {
-            const { fileId } = req.params;
-            const filePath = fileAccessMap[fileId];
-            
-            if (filePath) {
-                res.sendFile(filePath);
+                  })
+                })
+                resolve()
+              } catch (parseError) {
+                console.error('Parsing error:', parseError)
+                reject(parseError)
+              }
             } else {
-                res.status(404).send('Dosya bulunamadı veya erişim izni yok.');
+              // Show other logs from processFiles.js
+              console.log(line)
             }
-        });
+          })
+        })
 
-    processEachParam().catch(error => {
-        console.error('General file processing error:', error);
-        res.status(500).json({ error: 'General file processing error.' });
-    });
-});
+        process.stderr.on('data', (data) => {
+          console.error(`stderr: ${data}`)
+        })
+
+        process.on('close', (code) => {
+          if (code !== 0) {
+            reject(new Error(`processFiles.js exited with code ${code}`))
+          }
+        })
+      }).catch(error => {
+        console.error('File processing error:', error)
+        // Add results even in case of any error
+        results.push({ id, error: 'File processing error.' })
+      })
+    }
+    // Send the obtained results to the client after all processes are completed
+    res.json({ results })
+  }
+
+  app.get('/file/:fileId', (req, res) => {
+    const { fileId } = req.params
+    const filePath = fileAccessMap[fileId]
+
+    if (filePath) {
+      res.sendFile(filePath)
+    } else {
+      res.status(404).send('File not found or access denied.')
+    }
+  })
+
+  processEachParam().catch(error => {
+    console.error('General file processing error:', error)
+    res.status(500).json({ error: 'General file processing error.' })
+  })
+})
 
 function generateSecureId() {
-    // Basit bir ID üretici, gerçekte daha güvenli bir yöntem kullanılmalı
-    return Math.random().toString(36).substring(2, 15);
+  // Simple ID generator, a more secure method should be used in reality
+  return Math.random().toString(36).substring(2, 15)
 }
 
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-});
+  console.log(`Server is running at http://localhost:${port}`)
+})

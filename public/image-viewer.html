@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resim Görüntüleyici</title>
+<title>Image Viewer</title>
 <style>
   body, html {
     margin: 0;
@@ -13,22 +13,22 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #000; /* Modal pencerenin arka plan rengiyle uyumlu bir renk */
+    background-color: #000; /* Background color matches the modal window */
   }
 
   img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    background-color: #000; /* Resmin etrafındaki potansiyel boşluk için */
+    background-color: #000; /* Background color for potential space around the image */
   }
 </style>
 </head>
 <body>
-  <!-- Resim yolu dinamik olarak JavaScript ile güncellenecek -->
-  <img id="imageToShow" src="" alt="Görüntülenen Resim">
+  <!-- Image path will be dynamically updated with JavaScript -->
+  <img id="imageToShow" src="" alt="Displayed Image">
   <script>
-    // URL'den resim yolunu alın ve img src'ye atayın
+    // Get the image path from the URL and assign it to img src
     const queryParams = new URLSearchParams(window.location.search);
     const imagePath = queryParams.get('imagePath');
     document.getElementById('imageToShow').src = imagePath;
@@ -36,7 +36,7 @@
     window.onload = function() {
       const img = document.getElementById('imageToShow');
       img.onload = function() {
-        // Resim yüklenince boyutları hesapla
+        // Calculate dimensions when the image is loaded
         const ratio = img.naturalWidth / img.naturalHeight;
         const windowRatio = window.innerWidth / window.innerHeight;
         let width, height;
@@ -49,11 +49,11 @@
           height = width / ratio;
         }
 
-        // Parent'a gönderilecek mesajı oluştur
+        // Create message to send to the parent
         const message = { width: width, height: height };
         window.parent.postMessage(message, "*");
       };
-      // Hemen yüklenme kontrolü yap
+      // Check for immediate loading
       if (img.complete) {
         img.onload();
       }
