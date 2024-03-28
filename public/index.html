@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dosya İşleme Arayüzü</title>
+    <title>File Processing Interface</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,99 +28,96 @@
             background-color: #e7e7e7;
             border: 1px solid #c7c7c7;
         }
-        /* Güncellenen stil */
+        /* Updated styles */
         .secondariesContainer {
-            display: flex; /* İkincil bölümleri yan yana hizalamak için */
-            flex-direction: column; /* Alt alta sıralanmasını sağlamak için */
+            display: flex; /* Align secondary sections side by side */
+            flex-direction: column; /* Arrange them vertically */
         }
         .secondary {
-            display: flex; /* Her bir ikincil bölümü yatay olarak hizala */
-            margin-bottom: 10px; /* Bölümler arasında boşluk bırak */
+            display: flex; /* Align each secondary section horizontally */
+            margin-bottom: 10px; /* Spacing between sections */
         }
-        /* Modal Stilleri */
+        /* Modal Styles */
         .modal {
-            /*display: flex;*/
-            justify-content: center; /* Bu, dikey merkezlemeyi sağlar */
-            align-items: center; /* Bu, yatay merkezlemeyi sağlar */
-            display: none; /* Varsayılan olarak gizle */
-            position: fixed; /* Sabit pozisyon */
-            z-index: 1000; /* Z indexi yüksek tutarak diğer içeriklerin üzerinde göster */
+            justify-content: center; /* Vertically center */
+            align-items: center; /* Horizontally center */
+            display: none; /* Hide by default */
+            position: fixed; /* Fixed position */
+            z-index: 1000; /* Higher z-index to overlay other content */
             left: 0;
             top: 0;
-            width: 100%; /* Genişliği tam ekran yap */
-            height: 100%; /* Yüksekliği tam ekran yap */
-            overflow: auto; /* Gerekirse içerik kaydırılabilir */
-            background-color: rgba(0,0,0,0.4); /* Arkaplan rengi */
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Allow content to be scrolled if necessary */
+            background-color: rgba(0,0,0,0.4); /* Background color */
         }
 
         .modal-content {
             background-color: #fefefe;
-            /*margin: 0 auto; /* Orta kısımda konumlandır ve üst boşluğu kaldır */
-            margin: 0;
-            padding: 0;
-            padding: 0; /* İç boşluğu kaldır */
-            border: none; /* Kenarlık kaldırıldı */
-            width: 90%; /* Genişlik ayarı */
-            height: 99vh; /* Yükseklik ayarı, ekranın %90'ını kaplar */
+            margin: 0; /* Remove default margin */
+            padding: 0; /* Remove padding */
+            border: none; /* Remove border */
+            width: 90%; /* Set width */
+            height: 99vh; /* Set height to cover 90% of the screen */
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         #fileFrame {
-            width: 100%; /* iframe genişliği */
-            height: 100%; /* iframe yüksekliği */
-            border: none; /* iframe kenarlık kaldırıldı */
+            width: 100%; /* Set iframe width */
+            height: 100%; /* Set iframe height */
+            border: none; /* Remove iframe border */
         }
 
         img {
-            width: 100%; /* Resmi genişlet */
-            height: auto; /* Yüksekliği otomatik ayarla */
-            object-fit: contain; /* En/boy oranını koruyarak içeriği sığdır */
+            width: 100%; /* Expand image */
+            height: auto; /* Set height to auto */
+            object-fit: contain; /* Maintain aspect ratio */
         }
     </style>
 </head>
 <body>
-    <h1>Dosya İşleme Arayüzü</h1>
+    <h1>File Processing Interface</h1>
     <div>
-        <label for="sourceDir">Kaynak Klasör Yolu:</label>
+        <label for="sourceDir">Source Folder Path:</label>
         <input type="text" id="sourceDir" name="sourceDir">
     </div>
 
     <div id="searchAreaContainer">
-        <!-- İlk arama alanı burada yer alacak -->
+        <!-- First search area will be placed here -->
     </div>
 
-    <button onclick="addNewSearch()">Yeni Arama Ekle</button>
-    <button onclick="startProcessing()">İşlemi Başlat</button>
+    <button onclick="addNewSearch()">Add New Search</button>
+    <button onclick="startProcessing()">Start Processing</button>
 
     <div id="fileModal" class="modal" style="display: none;">
         <div class="modal-content">
             <iframe id="fileFrame" src="" width="100%" height="600px"></iframe>
-            <button onclick="closeModal()">Kapat</button>
+            <button onclick="closeModal()">Close</button>
         </div>
     </div>
-
-    <script>
+	
+	<script>
         let searchAreaCount = 0;
 
         function addNewSearch() {
             const container = document.getElementById('searchAreaContainer');
             const newSearchArea = document.createElement('div');
-            newSearchArea.setAttribute('id', 'searchArea-' + searchAreaCount); // Benzersiz ID atama
+            newSearchArea.setAttribute('id', 'searchArea-' + searchAreaCount); // Assign Unique ID
             newSearchArea.innerHTML = `
                 <div class="spawnableSearchArea">
                     <div style="display: flex;">
                         <div>
-                            <label>Aranacak Metin:</label>
+                            <label>Text to Search:</label>
                             <input type="text" name="searchText">
                         </div>
                         <div>
-                            <label>Hedef Klasör:</label>
+                            <label>Target Folder:</label>
                             <input type="text" name="targetDir">
                         </div>
                         <div>
-                            <label>Birincil Etiketler:</label>
+                            <label>Primary Tags:</label>
                             <input type="text" name="primaryCustomTags">
                         </div>
                     </div>
@@ -129,17 +126,17 @@
                         
                     </div>
                     <div>
-                        <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;">Yeni ikincil Arama Kriteri Ekle</button>
+                        <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;">Add New Secondary Search Criteria</button>
                     </div>
                         
-                    <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Bu Arama Alanını Sil</button>
-                    <div class="results" id="results-${searchAreaCount}">İşlem sonuçları burada görünecek.</div>                                    
+                    <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Remove This Search Area</button>
+                    <div class="results" id="results-${searchAreaCount}">Processing results will appear here.</div>                                    
                 </div>
             `;
 
             container.appendChild(newSearchArea);
 
-            // Yeni eklenen arama alanı için otomatik olarak bir ikincil arama kriteri ekleyin
+            // Automatically add a secondary search criteria for the newly added search area
             const newSecondariesContainer = newSearchArea.querySelector('.secondariesContainer');
             addNewSecondaryCriteria(newSecondariesContainer);
 
@@ -154,9 +151,8 @@
             }
         }
 
-
         function updateRemoveButtonsVisibility() {
-            // Bütün silme butonlarını kontrol edip, eğer sadece bir arama bölümü varsa butonu gizle
+            // Check all remove buttons and hide the button if there's only one search area
             document.querySelectorAll('.spawnableSearchArea').forEach(area => {
                 const removeButton = area.querySelector('button');
                 removeButton.style.display = searchAreaCount > 1 ? 'block' : 'none';
@@ -179,7 +175,7 @@
                 displayResults(data.results);
             })
             .catch(error => {
-                console.error('Hata:', error);
+                console.error('Error:', error);
             });
         }
 
@@ -187,32 +183,32 @@
             
             const searchAreas = document.querySelectorAll('.spawnableSearchArea');
             return Array.from(searchAreas).map((area, index) => {
-                        // Ana arama kriterlerini topla
+                        // Collect primary search criteria
                         const searchText = area.querySelector('[name="searchText"]').value;
                         const targetDir = area.querySelector('[name="targetDir"]').value;
 
-                        // İkincil arama kriterlerini topla
+                        // Collect secondary search criteria
                         const secondarySearchTexts = Array.from(area.querySelectorAll('[name="secondarySearchText[]"]')).map(input => input.value);
                         const subTargetDirs = Array.from(area.querySelectorAll('[name="subTargetDir[]"]')).map(input => input.value);
                         const secondaryCustomTagArr = Array.from(area.querySelectorAll('[name="secondaryCustomTags[]"]')).map(input => input.value);
 
-                        // İkincil arama kriterlerini ve hedef alt klasörleri birleştir
+                        // Combine secondary search criteria and sub-target directories
                         const secondaries = secondarySearchTexts.map((text, i) => ({
                             secondarySearchText: text,
                             subTargetDir: subTargetDirs[i] || '',
-                            secondaryCustomTags: secondaryCustomTagArr[i] || '', // Eğer ikincil etiket yoksa boş bir dize gönder
+                            secondaryCustomTags: secondaryCustomTagArr[i] || '', // Send an empty string if there's no secondary tag
                         }));
 
-                        // Dosya etiketlerini topla
+                        // Collect file tags
                         const primaryCustomTags = area.querySelector('[name="primaryCustomTags"]').value;
                         //const secondaryCustomTags = area.querySelector('[name="secondaryCustomTags"]').value;                        
                         console.log('index html primaryCustomTags:' + primaryCustomTags + ' secondaryCustomTags:' + secondaryCustomTagArr.join(','))
 
                         return {
-                            id: index, // Her arama alanı için benzersiz bir ID
+                            id: index, // Unique ID for each search area
                             searchText: searchText,
                             targetDir: targetDir,
-                            secondaries: secondaries, // İkincil arama kriterlerini ve hedef alt klasörleri içeren dizi
+                            secondaries: secondaries, // Array containing secondary search criteria and sub-target directories
                             primaryCustomTags: primaryCustomTags,                            
                         };
                     });
@@ -222,26 +218,20 @@
             results.forEach(result => {
                 const resultElement = document.getElementById(`results-${result.id}`);
                 if (result.error) {
-                    resultElement.innerHTML = `Hata: ${result.error}`;
+                    resultElement.innerHTML = `Error: ${result.error}`;
                 } else {
                     const fileListHtml = result.movedFiles.map(file => {
-                        // Dosya yolu metnini ve dosya için oluşturulan benzersiz linki kullan
+                        // Use file path text and a unique link generated for the file
                         return `<li><a href="#" class="file-link" data-filepath="/file/${file.fileId}">${file.filePath}</a></li>`;
                     }).join('');
 
                     resultElement.innerHTML = `
-                        <a href="#" onclick="toggleDetails(this)">Taşınan dosya sayısı: ${result.totalMoved}</a>
+                        <a href="#" onclick="toggleDetails(this)">Total Moved Files: ${result.totalMoved}</a>
                         <ul id="fileList-${result.id}" style="display: none;">${fileListHtml}</ul>
                     `;
                 }
             });
             addClickEventToFileLinks();
-        }
-
-        function toggleFileListVisibility(event, listId) {
-            event.preventDefault();
-            const list = document.getElementById(listId);
-            list.style.display = list.style.display === 'none' ? 'block' : 'none';
         }
 
         function addNewSecondaryCriteria(container) {
@@ -250,19 +240,19 @@
             newSecondary.innerHTML = `
                 <div style="display: flex;" class="secondary">
                     <div>
-                        <label>İkincil Aranacak Metin:</label>
+                        <label>Secondary Text to Search:</label>
                         <input type="text" name="secondarySearchText[]">
                     </div>
                     <div>
-                        <label>Hedef Alt Klasör:</label>
+                        <label>Sub-Target Folder:</label>
                         <input type="text" name="subTargetDir[]">
                     </div>
                     <div>
-                        <label>İkincil Etiketler:</label>
+                        <label>Secondary Tags:</label>
                         <input type="text" name="secondaryCustomTags[]">
                     </div>
                     <div>
-                        <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Bu ikincil Arama Kriterini Sil</button>
+                        <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Remove This Secondary Search Criteria</button>
                     </div>
                 </div>
             `;
@@ -275,30 +265,30 @@
         }
 
         function toggleDetails(element) {
-            const details = element.nextElementSibling; // <ul> elementini bul
+            const details = element.nextElementSibling; // Find the <ul> element
             details.style.display = details.style.display === "none" ? "block" : "none";
         }       
 
         function openModal(imagePath) {
             const modal = document.getElementById('fileModal');
-            modal.style.display = 'flex'; // Modalı görünür yap
+            modal.style.display = 'flex'; // Make the modal visible
             
             const frame = document.getElementById('fileFrame');
-            // `iframe`'in src'sini `image-viewer.html` ve sorgu parametresiyle ayarlayın
+            // Set the `src` of `iframe` to `image-viewer.html` with query parameter
             frame.src = `image-viewer.html?imagePath=${encodeURIComponent(imagePath)}`;
         }
 
         function closeModal() {
             const modal = document.getElementById('fileModal');
-            modal.style.display = 'none'; // Modalı gizle
+            modal.style.display = 'none'; // Hide the modal
         }
 
 
-        // Dinamik olarak oluşturulan tıklanabilir linkler için event listener ekleyen fonksiyon
+        // Function to add event listener for dynamically created clickable links
         function addClickEventToFileLinks() {
             document.querySelectorAll('.file-link').forEach(link => {
                 link.addEventListener('click', function(event) {
-                    event.preventDefault(); // Linkin varsayılan davranışını engelle
+                    event.preventDefault(); // Prevent the default behavior of the link
                     const filePath = this.getAttribute('data-filepath');
                     openModal(filePath);
                 });
@@ -318,17 +308,17 @@
             const dimensions = event.data;
 
             if (iframe && modalContent) {
-                // Ekrandaki kullanılabilir alanın %80'ini maksimum genişlik olarak belirle
-                const maxWidthPercent = 99; // % olarak
-                const maxHeightPercent = 100; // Yüksekliği %100 yap
+                // Set maximum width to 80% of available screen space
+                const maxWidthPercent = 99; // In percentage
+                const maxHeightPercent = 100; // Set height to 100%
 
-                // Oranları koruyarak maksimum genişlik ve yükseklik değerleri hesapla
+                // Calculate maximum width and height while maintaining aspect ratio
                 const ratio = dimensions.width / dimensions.height;
                 let contentWidthPercent;
 
-                // Yüzde cinsinden genişlik hesapla
+                // Calculate width in percentage
                 contentWidthPercent = (window.innerHeight * maxWidthPercent / window.innerWidth) * ratio;
-                contentWidthPercent = Math.min(contentWidthPercent, maxWidthPercent); // Maksimum genişliği aşma
+                contentWidthPercent = Math.min(contentWidthPercent, maxWidthPercent); // Don't exceed maximum width
 
                 modalContent.style.width = `${contentWidthPercent}%`;
                 modalContent.style.height = `${maxHeightPercent}%`;
@@ -337,14 +327,15 @@
                 modalContent.style.justifyContent = 'center';
                 modalContent.style.alignItems = 'center';
 
-                iframe.style.width = '100%'; // iframe'in genişliği modal-content'e göre %100 olacak
-                iframe.style.height = '100%'; // iframe'in yüksekliği modal-content'e göre %100 olacak
+                iframe.style.width = '100%'; // Set iframe width to match modal-content
+                iframe.style.height = '100%'; // Set iframe height to match modal-content
             }
         }, false);
 
-        // İlk arama alanını başlatılırken ekleyelim
+        // Initialize the first search area
         addNewSearch();
-        
-    </script>
+</script>
+
+
 </body>
 </html>
