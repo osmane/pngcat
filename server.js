@@ -16,13 +16,14 @@ app.post('/process-files', (req, res) => {
     let results = [];
 
     async function processEachParam() {
-        console.log('Server searchParams: ' + JSON.stringify(searchParams));
+        console.log('Server searchParams: ' + JSON.stringify(searchParams));        
         for (const params of searchParams) {
-            const { id, searchText, targetDir, secondaries, customTags } = params;
+            const { id, searchText, targetDir, secondaries, primaryCustomTags } = params;
             const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|');
             const subTargetDirs = secondaries.map(sec => sec.subTargetDir).join('|');
+            const secondaryCustomTags = secondaries.map(sec => sec.secondaryCustomTags).join('|');
 
-            const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, customTags];
+            const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags];
 
             await new Promise((resolve, reject) => {
                 const process = spawn('node', ['processFiles.js', ...args], { cwd: path.join(__dirname) });

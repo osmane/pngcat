@@ -9,15 +9,18 @@ const exiftoolBin = require('dist-exiftool')
 const ep = new exiftool.ExiftoolProcess(exiftoolBin)
 
 // Komut satırı argümanlarından gelen değerleri al
-const [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs] = process.argv.slice(2)
+const [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags] = process.argv.slice(2)
 
 // Birden fazla ikincil arama ve hedef klasörü işlemek üzere diziye dönüştür
 const secondarySearchTextArray = secondarySearchTexts ? secondarySearchTexts.split('|') : []
 const subTargetDirsArray = subTargetDirs ? subTargetDirs.split('|') : []
+const secondaryCustomTagsArray = secondaryCustomTags ? stringToTagstring(secondaryCustomTags).split(',') : []
 
 const primaryRegex = new RegExp(searchText, 'i')
 
-console.log('processFiles.js is running...')
+const primaryCustomTagsArray = primaryCustomTags ? stringToTagstring(primaryCustomTags).split(',') : []
+
+console.log(`processFiles.js is running... ${primaryCustomTags} arraying to ${primaryCustomTagsArray.join(',')}`);
 
 // Dosya adı çakışmalarını yönetmek için yardımcı fonksiyon
 async function generateNewFileName (originalPath, targetPath) {
@@ -58,7 +61,7 @@ async function processFile (filePath) {
     if (metadata) {
       // Meta verileri string'e çevir
 
-      const mdString = JSON.stringify(metadata)
+      const mdString = JSON.stringify(metadata)     
       //console.log(metadata.parameters )
 
       // Birincil ve ikincil metin kontrolü 
@@ -70,12 +73,23 @@ async function processFile (filePath) {
           }
         })        
       }
-      if (metadata.Keywords) {
+
+      let mdJson = JSON.parse(mdString)
+      if ((mdJson.Keywords) || (mdJson.keywords) || mdJson["Keywords"] ) {
+        currentKeywords = mdJson.Keywords || mdJson.keywords|| mdJson["Keywords"] 
+        console.log(`processFile, Current Keywords t1: ${currentKeywords}`)
+      }else{
+        console.log(`processFile, Current Keywords: `+ mdJson)
+      }
+      
+      console.log(`processFile, Current mdjson: ${JSON.stringify(mdJson)}`)
+
+      /*if ( metadata["Keywords"]) {
         currentKeywords = metadata.Keywords
-        console.log(`processFile, Current Keywords: ${JSON.stringify(currentKeywords)}`)
+        console.log(`processFile, Current Keywords t3: ${JSON.stringify(currentKeywords)}`)
       }else{
         console.log(`processFile, Current Keywords: null`)              
-      }     
+      }     */
     }
 
     return { found: metaDataFound, secondaryIndex, currentKeywords: currentKeywords }
@@ -85,42 +99,63 @@ async function processFile (filePath) {
   }
 }
 
+function stringToTagstring(text) {
+  return text.replace(/[^a-zA-Z0-9,]/g, '_');
+}
+
 // Asenkron klasör işleme fonksiyonu
 async function processDirectory (directory) {
   const files = await fs.promises.readdir(directory)
   let totalMoved = 0
   let totalErrors = 0
-  const movedFilesPaths = []
+  const movedFilesPaths = [];
   console.log('processDirectory started...')
   await ep.open()
   for (const file of files) {
     const filePath = path.join(directory, file)
     const fileExt = path.extname(filePath).toLowerCase()
+    let customTags =  []
     if (fileExt === '.png') {
       try {
-        const { found, secondaryIndex } = await processFile(filePath)
+        const { found, secondaryIndex, currentKeywords } = await processFile(filePath)
+        customTags =  [...primaryCustomTagsArray, ...currentKeywords]
         if (found) {
           let targetPath
           if (secondaryIndex >= 0) {
             // İkincil arama metni bulunursa, dosyayı ilgili alt klasöre taşı
-            targetPath = path.join(targetDir, subTargetDirsArray[secondaryIndex], path.basename(filePath))
+            if (subTargetDirsArray[secondaryIndex] !== '') {
+              targetPath = path.join(targetDir, subTargetDirsArray[secondaryIndex], path.basename(filePath))
+            }
+            if (secondaryCustomTagsArray[secondaryIndex]) {
+              customTags = customTags.concat(secondaryCustomTagsArray[secondaryIndex]).concat(currentKeywords)
+            }
           } else {
             // Yalnızca birincil arama metni bulunursa, dosyayı birincil hedef klasöre taşı
             targetPath = path.join(targetDir, path.basename(filePath))
           }
 
-          // Dosya adı çakışması kontrolü ve yeni dosya adı üretimi
-          targetPath = await generateNewFileName(filePath, targetPath)
+          if (targetPath) {
+            // Dosya adı çakışması kontrolü ve yeni dosya adı üretimi
+            targetPath = await generateNewFileName(filePath, targetPath)
 
-          await fsExtra.move(filePath, targetPath)
+            await fsExtra.move(filePath, targetPath)
+          }else{
+            targetPath = filePath
+          }
 
+          if (customTags.length > 0) {
+            customTags = [...new Set(customTags)]            
+            console.log(`processDirectory,array deduping Keywords: ${customTags}`)
             await ep.writeMetadata(targetPath, {
             //all: '', // remove existing tags
-            comment: 'Exiftool rules!',
-            'Keywords+': [ 'keywordA', 'keywordB' ],
+            //comment: 'Exiftool rules!',
+             "Keywords": customTags,
             }, ['overwrite_original'])
             .then(console.log)
             .catch(console.error);
+          }else{
+            console.log(`processDirectory, not Keywords found...`)
+          }
 
           console.log(`File moved to: ${targetPath}`);
           totalMoved++;
