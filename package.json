@@ -13,8 +13,7 @@
     "dist-exiftool": "^10.53.0",
     "express": "^4.19.2",
     "fs-extra": "^11.2.0",
-    "node-exiftool": "^2.3.0",
-    "png-itxt": "^2.0.0"
+    "node-exiftool": "^2.3.0"
   },
   "description": "",
   "devDependencies": {
