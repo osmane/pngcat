@@ -9,7 +9,7 @@ const exiftoolBin = require('dist-exiftool')
 const ep = new exiftool.ExiftoolProcess(exiftoolBin)
 
 // Get values from command line arguments
-const [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags] = process.argv.slice(2)
+const [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags, checkpointChecked, loraChecked] = process.argv.slice(2)
 
 // Convert multiple secondary search texts and target directories into arrays
 const secondarySearchTextArray = secondarySearchTexts ? secondarySearchTexts.split('|') : []
@@ -17,6 +17,8 @@ const subTargetDirsArray = subTargetDirs ? subTargetDirs.split('|') : []
 const secondaryCustomTagsArray = secondaryCustomTags ? stringToTagstring(secondaryCustomTags).split(',') : []
 
 const primaryRegex = new RegExp(searchText, 'i')
+const loraRegex = /Lora hashes: \\"([^"]+)\\"/
+const sysTags = []
 
 const primaryCustomTagsArray = primaryCustomTags ? stringToTagstring(primaryCustomTags).split(',') : []
 
@@ -44,7 +46,7 @@ async function generateNewFileName (originalPath, targetPath) {
 }
 
 // Async file processing function
-async function processFile (filePath) {
+async function processFile (filePath) {  
   try {
     console.log('processFile started...')
 
@@ -54,7 +56,7 @@ async function processFile (filePath) {
     // console.log('readMetadata result t1:', result.toString())
 
     const metadata = result.data[0] // Metadata for the first file
-    let metaDataFound = false
+    let primaryFound = false
     let secondaryIndex = -1
     let currentKeywords = ''
     // Search and check texts within file metadata
@@ -66,12 +68,24 @@ async function processFile (filePath) {
 
       // Primary and secondary text checks
       if (metadata.parameters && metadata.parameters.match(primaryRegex)) {
-        metaDataFound = true
+        primaryFound = true
         secondarySearchTextArray.forEach((text, index) => {
           if (mdString.match(new RegExp(text, 'i'))) {
             secondaryIndex = index
           }
         })
+
+        if (checkpointChecked) {
+          sysTags.push('Checkpoint_' + (mdString.match(/, Model: ([\w\d]+),/)?.[1] || null))
+        }
+
+        if (loraChecked) {
+          const match = mdString.match(loraRegex)
+          //sysTags.push(match ? match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]) : [])
+          if (match) {
+            sysTags.push(...match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]));
+          }
+        }
       }
 
       const mdJson = JSON.parse(mdString)
@@ -84,7 +98,7 @@ async function processFile (filePath) {
       console.log(`processFile, Current mdjson: ${JSON.stringify(mdJson)}`)
     }
 
-    return { found: metaDataFound, secondaryIndex, currentKeywords: currentKeywords }
+    return { found: primaryFound, secondaryIndex, currentKeywords: currentKeywords }
   } catch (error) {
     console.error(`Error: ${error}`)
     return { found: false }
@@ -106,14 +120,14 @@ async function processDirectory (directory) {
   for (const file of files) {
     const filePath = path.join(directory, file)
     const fileExt = path.extname(filePath).toLowerCase()
-    let customTags =  []
+    let customTags = []
     if (fileExt === '.png') {
       try {
         const { found, secondaryIndex, currentKeywords } = await processFile(filePath)
-        //customTags = [...primaryCustomTagsArray, ...currentKeywords]
-        customTags = customTags.concat(primaryCustomTagsArray).concat(currentKeywords)
         if (found) {
           let targetPath
+          customTags = customTags.concat(primaryCustomTagsArray).concat(currentKeywords).concat(sysTags)
+
           if (secondaryIndex >= 0) {
             // If a secondary search text is found, move the file to the corresponding sub-directory
             if (subTargetDirsArray[secondaryIndex] !== '') {

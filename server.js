@@ -15,15 +15,15 @@ app.post('/process-files', (req, res) => {
 
   const results = []
 
-  async function processEachParam() {
+  async function processEachParam () {
     console.log('Server searchParams: ' + JSON.stringify(searchParams))
     for (const params of searchParams) {
-      const { id, searchText, targetDir, secondaries, primaryCustomTags } = params
+      const { id, searchText, targetDir, secondaries, primaryCustomTags, checkpointChecked, loraChecked } = params
       const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|')
       const subTargetDirs = secondaries.map(sec => sec.subTargetDir).join('|')
       const secondaryCustomTags = secondaries.map(sec => sec.secondaryCustomTags).join('|')
 
-      const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags]
+      const args = [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, primaryCustomTags, secondaryCustomTags, checkpointChecked, loraChecked]
 
       await new Promise((resolve, reject) => {
         const process = spawn('node', ['processFiles.js', ...args], { cwd: path.join(__dirname) })
@@ -97,7 +97,7 @@ app.post('/process-files', (req, res) => {
   })
 })
 
-function generateSecureId() {
+function generateSecureId () {
   // Simple ID generator, a more secure method should be used in reality
   return Math.random().toString(36).substring(2, 15)
 }

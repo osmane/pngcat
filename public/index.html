@@ -130,11 +130,11 @@
                     </div>
                     <div class="sdTagsContainer" style="display: flex;">
                         <div class="checkpointCheckClass">
-                            <input type="checkbox" id="checkpointCheckId" name="checkpointCheckName" value="checkpoint">
+                            <input type="checkbox" id="checkpointCheckId" name="checkpointCheckName" value="addCheckpoints">
                             <label for="checkpointCheckId">Add Checkpoint name as tag</label>
                         </div>
                         <div class="loraCheckClass">
-                            <input type="checkbox" id="loraCheckId" name="loraCheckName" value="checkpoint">
+                            <input type="checkbox" id="loraCheckId" name="loraCheckName" value="addLoras">
                             <label for="loraCheckId">Add LORAs name as tag</label>
                         </div>
                     </div>
@@ -201,6 +201,10 @@
                         const subTargetDirs = Array.from(area.querySelectorAll('[name="subTargetDir[]"]')).map(input => input.value);
                         const secondaryCustomTagArr = Array.from(area.querySelectorAll('[name="secondaryCustomTags[]"]')).map(input => input.value);
 
+                        const checkpointChecked = area.querySelector('[name="checkpointCheckName"]').checked ? 'addCheckpoints' : ''
+                        const loraChecked = area.querySelector('[name="loraCheckName"]').checked ? 'addLoras' : ''
+            
+
                         // Combine secondary search criteria and sub-target directories
                         const secondaries = secondarySearchTexts.map((text, i) => ({
                             secondarySearchText: text,
@@ -218,7 +222,9 @@
                             searchText: searchText,
                             targetDir: targetDir,
                             secondaries: secondaries, // Array containing secondary search criteria and sub-target directories
-                            primaryCustomTags: primaryCustomTags,                            
+                            primaryCustomTags: primaryCustomTags,
+                            checkpointChecked: checkpointChecked,
+                            loraChecked: loraChecked,                            
                         };
                     });
         }
