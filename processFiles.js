@@ -46,7 +46,7 @@ async function generateNewFileName (originalPath, targetPath) {
 }
 
 // Async file processing function
-async function processFile (filePath) {  
+async function processFile (filePath) {
   try {
     console.log('processFile started...')
 
@@ -83,7 +83,7 @@ async function processFile (filePath) {
           const match = mdString.match(loraRegex)
           //sysTags.push(match ? match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]) : [])
           if (match) {
-            sysTags.push(...match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]));
+            sysTags.push(...match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]))
           }
         }
       }
@@ -105,7 +105,7 @@ async function processFile (filePath) {
   }
 }
 
-function stringToTagstring(text) {
+function stringToTagstring (text) {
   return text.replace(/[^a-zA-Z0-9,]/g, '_')
 }
 
