@@ -5,63 +5,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Processing Interface</title>
-    <script src="/components/tag-list.js"></script>
-    <script>
-        // Global Event Bus
-        const EventBus = document.createElement('div');
-    
-        let tagsFromFile = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9', 'tag10'];
-    
-        function updateTagsOnInput(updatedTags) {
-            document.querySelectorAll('tag-list').forEach((targetTaglist) => {
-                targetTaglist.addEventListener('selectedTagsSet', (event) => {
-                    const tagListElId = event.currentTarget.getAttribute('data-id');                    
-                    if (!targetTaglist.tagsFromDb.length) {
-                        targetTaglist.tagsFromDb = updatedTags;
-                    } else {
-                        updatedTags = targetTaglist.usableTags;
-                    }
-                    const inputElement = document.querySelector(`input[data-id="${tagListElId}"]`);
-                    if (inputElement && event.detail && event.detail.length > 0) {
-                        inputElement.value = event.detail.join(',');
-                    }
-                });
-                
-                // Tag güncellemelerini dinleme
-                listenForTagUpdates(targetTaglist);
-            });
-        }
-    
-        // Tag güncellemelerini yayma fonksiyonu
-        function broadcastTagUpdate(updatedTags) {
-            EventBus.dispatchEvent(new CustomEvent('tagsUpdated', { detail: updatedTags }));
-        }
-    
-        // Her tag-list için tag güncellemelerini dinleme
-        function listenForTagUpdates(tagListElement) {
-            EventBus.addEventListener('tagsUpdated', (event) => {
-                // UsableTags güncelleme
-                tagListElement.usableTags = event.detail;
-                // UI güncellemesi veya başka işlemler
-            });
-        }
-    
-        const observer = new MutationObserver((mutations, obs) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.matches && node.matches('tag-list')) {
-                        updateTagsOnInput(tagsFromFile);
-                        listenForTagUpdates(node);
-                    }
-                });
+    <script type="module" src="/components/tag-list.js" defer></script>
+    <script defer>
+        document.addEventListener('DOMContentLoaded', () => {
+        // Dinamik bileşenleri yükleme ve hazır olduğunda etkileşime geçme
+             loadDynamicComponent('searchArea-0');
+
+            // Dinamik bileşenden gelen olayları dinleme
+            window.addEventListener('componentReady', (e) => {
+                console.log("Dinamik bileşen hazır!", e.detail);
+                // Gerekirse burada bileşen ile etkileşime geç
             });
         });
-    
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const targetElement = document.querySelector('#searchAreaContainer');
-            observer.observe(targetElement, { childList: true, subtree: true });
-            updateTagsOnInput(tagsFromFile);
-        });
+
+        function loadDynamicComponent(searchAreaId) {
+            // Dinamik bileşenin yüklenmesi simülasyonu
+            //setTimeout(() => {
+                const primaryContainer = document.getElementById(searchAreaId).getElementsByClassName ('primary-tag-container')[0];
+                primaryContainer.innerHTML += '<tag-list id="tagListId" class="tag-list-class"></tag-list>';
+
+                const secondaryContainer = document.getElementById(searchAreaId).getElementsByClassName ('secondary-tag-container')[0];
+                secondaryContainer.innerHTML += '<tag-list id="tagListId" class="tag-list-class"></tag-list>';
+
+                // Bileşenin hazır olduğunu bildiren özel bir olay yayma
+                const event = new CustomEvent('componentReady', { detail: { message: 'TagList yüklendi.' } });
+                window.dispatchEvent(event);
+            //}, 1000); // Gerçek uygulamada bu, bileşenin yüklenmesi için gereken süreye bağlıdır
+        }
+
+        function updateSharedData(updatedDataArray) {            
+                const sharedDataArr = document.getElementsByName('sharedData')[0].value.split(',');
+                if (!this.arraysEqual(updatedDataArray, sharedDataArr)) {
+                    document.getElementsByName('sharedData')[0].value = updatedDataArray.join(',');
+                    // Güncellenmiş veriyi diğer bileşenlerle paylaşmak için bir yol (örneğin, özel bir olay yayınlayarak)
+                    const event = new CustomEvent('dataUpdated', { detail: updatedDataArray });
+                    window.dispatchEvent(event);
+                }    
+        }
+
+        function arraysEqual(a, b) {
+            return a.length === b.length && a.every((val, index) => val === b[index]);
+        }
+        
     </script>
     
     <style>
@@ -180,7 +165,7 @@
     </div>
     <div>
         <label for="sourceDir">Tag source:</label>
-        <input type="text" name="tagSummary">
+        <input type="text" name="sharedData" value="tag1,tag2,tag3,tag4">
     </div>    
 
     <div id="searchAreaContainer">
@@ -217,8 +202,8 @@
                         </div>
                         <div class="primary-tag-container">
                             <label>Primary Tags:</label>
-                            <input type="text" name="primaryCustomTags" data-id="${searchAreaCount}p">
-                            <tag-list id="tagListId" class="tag-list-class" data-id="${searchAreaCount}p"></tag-list>
+                            <input type="text" name="primaryCustomTags" data-id="1p">
+                            <!-- <tag-list id="tagListId" class="tag-list-class" ></tag-list> -->
                         </div>
                     </div>
 
@@ -250,6 +235,9 @@
             addNewSecondaryCriteria(newSecondariesContainer);
 
             searchAreaCount++;
+            if (container.getElementsByClassName('tag-list-class').length > 0) {
+                loadDynamicComponent(newSearchArea.id) 
+            }            
             updateRemoveButtonsVisibility();
         }
 
@@ -362,10 +350,10 @@
                         <label>Sub-Target Folder:</label>
                         <input type="text" name="subTargetDir[]">
                     </div>
-                    <div style="display: flex;">
+                    <div class="secondary-tag-container" style="display: flex;">
                         <label>Secondary Tags:</label>
                         <input type="text" name="secondaryCustomTags[]"  data-id="${searchAreaCount}s">
-                        <tag-list id="tagListId" class="tag-list-class" data-id="${searchAreaCount}s"></tag-list>
+                        <!-- <tag-list id="tagListId" class="tag-list-class" data-id="${searchAreaCount}s"></tag-list> -->
                     </div>
                     <div>
                         <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Remove This Secondary Search Criteria</button>

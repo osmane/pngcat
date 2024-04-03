@@ -1,7 +1,10 @@
 class TagList extends HTMLElement {
-  constructor () {
+  constructor() {
     super()
     this.attachShadow({ mode: 'open' })
+    this._tagsFromDb = [] // ['Surreal art', 'Abstract painting', 'Neon lights', 'Glowing sunset', 'Digital artwork']
+    this._usableTags = [] // [...new Set(this._tagsFromDb)]
+    this.selectedTags = []
     this.shadowRoot.innerHTML = `
             <style>
             body {
@@ -131,13 +134,10 @@ class TagList extends HTMLElement {
                 <div class="container" id="pre-tag-container"></div>
             </div>
         `
-    this._tagsFromDb = [] // ['Surreal art', 'Abstract painting', 'Neon lights', 'Glowing sunset', 'Digital artwork']
-    this._usableTags = [...new Set(this._tagsFromDb)]
-    this.selectedTags = []
-    this.init()
+
   }
 
-  init () {
+  init() {
     const realTagDefiner = this.shadowRoot.getElementById('real-tag-definer')
     const preTagTopContainer = this.shadowRoot.getElementById('pre-tag-top-container')
     const realTagContainer = this.shadowRoot.getElementById('real-tag-container')
@@ -171,7 +171,7 @@ class TagList extends HTMLElement {
         const upperEl = event.target.closest('.pre-tag') ? event.target.closest('.pre-tag') : event.target.closest('.real-tag')
         const tagText = upperEl.textContent.trim()
         if (upperEl.classList.contains('pre-tag')) {
-          this._usableTags = this._usableTags.filter(t => t !== tagText)
+          this.usableTags = this.usableTags.filter(t => t !== tagText)
           this.selectedTags = this.selectedTags.filter(t => t !== tagText)
         } else if (upperEl.classList.contains('real-tag')) {
           this.selectedTags = this.selectedTags.filter(t => t !== tagText)
@@ -195,7 +195,7 @@ class TagList extends HTMLElement {
     })
   }
 
-  updateAddButton (value) {
+  updateAddButton(value) {
     const addNewTagBtnContainer = this.shadowRoot.getElementById('add-new-tag-btn-container')
     addNewTagBtnContainer.innerHTML = ''
 
@@ -209,15 +209,17 @@ class TagList extends HTMLElement {
     }
   }
 
-  addOrSelectTag (newTag, eventSource) {
+  addOrSelectTag(newTag, eventSource) {
     if (this.selectedTags.includes(newTag) && (eventSource === 'pre-tag')) {
       this.selectedTags = this.selectedTags.filter(t => t !== newTag)
     } else {
       if (!this.selectedTags.includes(newTag)) {
         this.selectedTags.push(newTag)
+        this.selectedTags = this.selectedTags // to trigger setter, do not remove
       }
-      if (!this._usableTags.includes(newTag)) {
-        this._usableTags.push(newTag)
+      if (!this.usableTags.includes(newTag)) {
+        this.usableTags.push(newTag)
+        this.usableTags = this.usableTags // to trigger setter, do not remove
       }
     }
     this.shadowRoot.getElementById('real-tag-definer').value = ''
@@ -230,10 +232,10 @@ class TagList extends HTMLElement {
     addNewTagBtnContainer.innerHTML = ''
   }
 
-  updateUsableTagsDisplay () {
+  updateUsableTagsDisplay() {
     const preTagContainer = this.shadowRoot.getElementById('pre-tag-container')
     preTagContainer.innerHTML = ''
-    this._usableTags.forEach(tag => {
+    this.usableTags.forEach(tag => {
       const tagEl = document.createElement('div')
       tagEl.className = 'pre-tag'
       if (this.selectedTags.includes(tag)) {
@@ -253,7 +255,7 @@ class TagList extends HTMLElement {
     })
   }
 
-  updateSelectedTagsDisplay () {
+  updateSelectedTagsDisplay() {
     const realTagContainer = this.shadowRoot.getElementById('real-tag-container')
     realTagContainer.querySelectorAll('.real-tag').forEach(tag => tag.remove())
     this.selectedTags.forEach(tag => {
@@ -268,10 +270,10 @@ class TagList extends HTMLElement {
       this.addDeleteButton(tagEl)
       realTagContainer.insertBefore(tagEl, this.shadowRoot.getElementById('real-tag-definer'))
     })
-    this.dispatchEvent(new CustomEvent('selectedTagsSet', { detail: this.selectedTags }))
+
   }
 
-  addDeleteButton (tagEl) {
+  addDeleteButton(tagEl) {
     const deleteBtn = document.createElement('span')
     deleteBtn.classList.add('delete-btn')
     if (tagEl.classList.contains('pre-tag')) {
@@ -284,25 +286,62 @@ class TagList extends HTMLElement {
     deleteBtn.appendChild(deleteBtnInner)
   }
 
-  get tagsFromDb () {
+  get tagsFromDb() {
     return this._tagsFromDb
   }
 
-  set tagsFromDb (tags) {
-    this._tagsFromDb = tags
-    this._usableTags = [...new Set(this._tagsFromDb)]
-    this.updateUsableTagsDisplay()
-    console.log('tagsFromDb set')
+  set tagsFromDb(tags) {
+    if (!this.arraysEqual(this._tagsFromDb, tags)) {
+      this._tagsFromDb = tags
+      this._usableTags = [...new Set(this._tagsFromDb)]
+      console.log('_tagsFromDb in set tagsFromDb: ' + this._tagsFromDb)
+      this.updateUsableTagsDisplay()
+      console.log('tagsFromDb set')      
+      this.updateUserInteraction()
+    }    
   }
 
-  get usableTags () {
-    console.log('usableTags get: ' + this._usableTags)
+  arraysEqual(a, b) {
+      return a.length === b.length && a.every((val, index) => val === b[index]);
+  }
+
+  get usableTags() {
+    //console.log('usableTags get: ' + this._usableTags)
+    //console.log('_tagsFromDb in get usableTags: ' + this._tagsFromDb)
     return this._usableTags
   }
 
-  connectedCallback () {
-    /* this.shadowRoot.getElementById('real-tag-definer').addEventListener('click', () => {
-    }) */
+  set usableTags(tags) {
+    this._usableTags = tags
+    this.tagsFromDb = this._usableTags
+    //console.log('usableTags set')
+  }
+
+  connectedCallback() {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      this.loadDataFromPage();
+      window.addEventListener('dataUpdated', this.handleDataUpdate.bind(this));
+    } 
+  }
+
+  loadDataFromPage() {
+    const sharedDataEl = document.getElementsByName('sharedData')[0];
+    const sharedDataValue = sharedDataEl.value;
+    this.tagsFromDb = sharedDataValue.split(',');
+    this.init(); 
+  }
+
+  handleDataUpdate(e) {
+    this.tagsFromDb = e.detail;
+  }
+
+  // Örnek: Kullanıcı etkileşimi sonucu veriyi güncelleme ve anasayfaya bildirme
+  updateUserInteraction(newData) {    
+    updateSharedData(this.tagsFromDb); // Anasayfadaki fonksiyonu çağır
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('dataUpdated', this.handleDataUpdate.bind(this));
   }
 }
 
