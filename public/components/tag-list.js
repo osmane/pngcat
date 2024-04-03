@@ -131,8 +131,8 @@ class TagList extends HTMLElement {
                 <div class="container" id="pre-tag-container"></div>
             </div>
         `
-    this.tagsFromDb = ['Surreal art', 'Abstract painting', 'Neon lights', 'Glowing sunset', 'Digital artwork']
-    this.usableTags = [...new Set(this.tagsFromDb)]
+    this._tagsFromDb = [] // ['Surreal art', 'Abstract painting', 'Neon lights', 'Glowing sunset', 'Digital artwork']
+    this._usableTags = [...new Set(this._tagsFromDb)]
     this.selectedTags = []
     this.init()
   }
@@ -171,7 +171,7 @@ class TagList extends HTMLElement {
         const upperEl = event.target.closest('.pre-tag') ? event.target.closest('.pre-tag') : event.target.closest('.real-tag')
         const tagText = upperEl.textContent.trim()
         if (upperEl.classList.contains('pre-tag')) {
-          this.usableTags = this.usableTags.filter(t => t !== tagText)
+          this._usableTags = this._usableTags.filter(t => t !== tagText)
           this.selectedTags = this.selectedTags.filter(t => t !== tagText)
         } else if (upperEl.classList.contains('real-tag')) {
           this.selectedTags = this.selectedTags.filter(t => t !== tagText)
@@ -216,8 +216,8 @@ class TagList extends HTMLElement {
       if (!this.selectedTags.includes(newTag)) {
         this.selectedTags.push(newTag)
       }
-      if (!this.usableTags.includes(newTag)) {
-        this.usableTags.push(newTag)
+      if (!this._usableTags.includes(newTag)) {
+        this._usableTags.push(newTag)
       }
     }
     this.shadowRoot.getElementById('real-tag-definer').value = ''
@@ -233,7 +233,7 @@ class TagList extends HTMLElement {
   updateUsableTagsDisplay () {
     const preTagContainer = this.shadowRoot.getElementById('pre-tag-container')
     preTagContainer.innerHTML = ''
-    this.usableTags.forEach(tag => {
+    this._usableTags.forEach(tag => {
       const tagEl = document.createElement('div')
       tagEl.className = 'pre-tag'
       if (this.selectedTags.includes(tag)) {
@@ -282,6 +282,27 @@ class TagList extends HTMLElement {
     const deleteBtnInner = document.createElement('span')
     deleteBtnInner.classList.add('delete-btn-inner')
     deleteBtn.appendChild(deleteBtnInner)
+  }
+
+  get tagsFromDb () {
+    return this._tagsFromDb
+  }
+
+  set tagsFromDb (tags) {
+    this._tagsFromDb = tags
+    this._usableTags = [...new Set(this._tagsFromDb)]
+    this.updateUsableTagsDisplay()
+    console.log('tagsFromDb set')
+  }
+
+  get usableTags () {
+    console.log('usableTags get: ' + this._usableTags)
+    return this._usableTags
+  }
+
+  connectedCallback () {
+    /* this.shadowRoot.getElementById('real-tag-definer').addEventListener('click', () => {
+    }) */
   }
 }
 

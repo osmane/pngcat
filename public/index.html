@@ -1,21 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Processing Interface</title>
     <script src="/components/tag-list.js"></script>
+    <script>
+        // Global Event Bus
+        const EventBus = document.createElement('div');
+    
+        let tagsFromFile = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9', 'tag10'];
+    
+        function updateTagsOnInput(updatedTags) {
+            document.querySelectorAll('tag-list').forEach((targetTaglist) => {
+                targetTaglist.addEventListener('selectedTagsSet', (event) => {
+                    const tagListElId = event.currentTarget.getAttribute('data-id');                    
+                    if (!targetTaglist.tagsFromDb.length) {
+                        targetTaglist.tagsFromDb = updatedTags;
+                    } else {
+                        updatedTags = targetTaglist.usableTags;
+                    }
+                    const inputElement = document.querySelector(`input[data-id="${tagListElId}"]`);
+                    if (inputElement && event.detail && event.detail.length > 0) {
+                        inputElement.value = event.detail.join(',');
+                    }
+                });
+                
+                // Tag güncellemelerini dinleme
+                listenForTagUpdates(targetTaglist);
+            });
+        }
+    
+        // Tag güncellemelerini yayma fonksiyonu
+        function broadcastTagUpdate(updatedTags) {
+            EventBus.dispatchEvent(new CustomEvent('tagsUpdated', { detail: updatedTags }));
+        }
+    
+        // Her tag-list için tag güncellemelerini dinleme
+        function listenForTagUpdates(tagListElement) {
+            EventBus.addEventListener('tagsUpdated', (event) => {
+                // UsableTags güncelleme
+                tagListElement.usableTags = event.detail;
+                // UI güncellemesi veya başka işlemler
+            });
+        }
+    
+        const observer = new MutationObserver((mutations, obs) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.matches && node.matches('tag-list')) {
+                        updateTagsOnInput(tagsFromFile);
+                        listenForTagUpdates(node);
+                    }
+                });
+            });
+        });
+    
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const targetElement = document.querySelector('#searchAreaContainer');
+            observer.observe(targetElement, { childList: true, subtree: true });
+            updateTagsOnInput(tagsFromFile);
+        });
+    </script>
+    
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
         }
+
         .results {
             margin-top: 20px;
             padding: 10px;
             background-color: #f0f0f0;
             border: 1px solid #ddd;
         }
+
         #fileList {
             display: none;
             background-color: #f9f9f9;
@@ -23,92 +84,126 @@
             margin-top: 5px;
             padding: 10px;
         }
+
         #fileListContainer {
             cursor: pointer;
             padding: 10px;
             background-color: #e7e7e7;
             border: 1px solid #c7c7c7;
         }
+
         /* Updated styles */
         .secondariesContainer {
-            display: flex; /* Align secondary sections side by side */
-            flex-direction: column; /* Arrange them vertically */
+            display: flex;
+            /* Align secondary sections side by side */
+            flex-direction: column;
+            /* Arrange them vertically */
         }
+
         .secondary {
-            display: flex; /* Align each secondary section horizontally */
-            margin-bottom: 10px; /* Spacing between sections */
+            display: flex;
+            /* Align each secondary section horizontally */
+            margin-bottom: 10px;
+            /* Spacing between sections */
         }
+
         /* Modal Styles */
         .modal {
-            justify-content: center; /* Vertically center */
-            align-items: center; /* Horizontally center */
-            display: none; /* Hide by default */
-            position: fixed; /* Fixed position */
-            z-index: 1000; /* Higher z-index to overlay other content */
+            justify-content: center;
+            /* Vertically center */
+            align-items: center;
+            /* Horizontally center */
+            display: none;
+            /* Hide by default */
+            position: fixed;
+            /* Fixed position */
+            z-index: 1000;
+            /* Higher z-index to overlay other content */
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Allow content to be scrolled if necessary */
-            background-color: rgba(0,0,0,0.4); /* Background color */
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Allow content to be scrolled if necessary */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Background color */
         }
 
         .modal-content {
             background-color: #fefefe;
-            margin: 0; /* Remove default margin */
-            padding: 0; /* Remove padding */
-            border: none; /* Remove border */
-            width: 90%; /* Set width */
-            height: 99vh; /* Set height to cover 90% of the screen */
+            margin: 0;
+            /* Remove default margin */
+            padding: 0;
+            /* Remove padding */
+            border: none;
+            /* Remove border */
+            width: 90%;
+            /* Set width */
+            height: 99vh;
+            /* Set height to cover 90% of the screen */
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         #fileFrame {
-            width: 100%; /* Set iframe width */
-            height: 100%; /* Set iframe height */
-            border: none; /* Remove iframe border */
+            width: 100%;
+            /* Set iframe width */
+            height: 100%;
+            /* Set iframe height */
+            border: none;
+            /* Remove iframe border */
         }
 
         img {
-            width: 100%; /* Expand image */
-            height: auto; /* Set height to auto */
-            object-fit: contain; /* Maintain aspect ratio */
+            width: 100%;
+            /* Expand image */
+            height: auto;
+            /* Set height to auto */
+            object-fit: contain;
+            /* Maintain aspect ratio */
         }
+
         .primary-tag-container {
             display: flex;
         }
-        
     </style>
 </head>
+
 <body>
     <h1>File Processing Interface</h1>
     <div>
         <label for="sourceDir">Source Folder Path:</label>
         <input type="text" id="sourceDir" name="sourceDir">
     </div>
+    <div>
+        <label for="sourceDir">Tag source:</label>
+        <input type="text" name="tagSummary">
+    </div>    
 
     <div id="searchAreaContainer">
         <!-- First search area will be placed here -->
     </div>
 
     <button onclick="addNewSearch()">Add New Search</button>
-    <button onclick="startProcessing()">Start Processing</button>    
+    <button onclick="startProcessing()">Start Processing</button>
     <div id="fileModal" class="modal" style="display: none;">
         <div class="modal-content">
             <iframe id="fileFrame" src="" width="100%" height="600px"></iframe>
             <button onclick="closeModal()">Close</button>
         </div>
     </div>
-	
-	<script>
-        let searchAreaCount = 0;       
+
+    <script>
+        let searchAreaCount = 0;
 
         function addNewSearch() {
             const container = document.getElementById('searchAreaContainer');
             const newSearchArea = document.createElement('div');
-            newSearchArea.setAttribute('id', 'searchArea-' + searchAreaCount); // Assign Unique ID
+            newSearchArea.setAttribute('id', 'searchArea-' + searchAreaCount);
+            newSearchArea.setAttribute('class', 'search-area');
             newSearchArea.innerHTML = `
                 <div class="spawnableSearchArea">
                     <div style="display: flex;">
@@ -122,8 +217,8 @@
                         </div>
                         <div class="primary-tag-container">
                             <label>Primary Tags:</label>
-                            <input type="text" name="primaryCustomTags">
-                            <tag-list id="tagListId" class="tag-list-class"></tag-list>
+                            <input type="text" name="primaryCustomTags" data-id="${searchAreaCount}p">
+                            <tag-list id="tagListId" class="tag-list-class" data-id="${searchAreaCount}p"></tag-list>
                         </div>
                     </div>
 
@@ -184,54 +279,54 @@
                 },
                 body: JSON.stringify({ sourceDir, searchParams }),
             })
-            .then(response => response.json())
-            .then(data => {
-                displayResults(data.results);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data.results);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
 
         function collectSearchParams() {
-            
+
             const searchAreas = document.querySelectorAll('.spawnableSearchArea');
             return Array.from(searchAreas).map((area, index) => {
-                        // Collect primary search criteria
-                        const searchText = area.querySelector('[name="searchText"]').value;
-                        const targetDir = area.querySelector('[name="targetDir"]').value;
+                // Collect primary search criteria
+                const searchText = area.querySelector('[name="searchText"]').value;
+                const targetDir = area.querySelector('[name="targetDir"]').value;
 
-                        // Collect secondary search criteria
-                        const secondarySearchTexts = Array.from(area.querySelectorAll('[name="secondarySearchText[]"]')).map(input => input.value);
-                        const subTargetDirs = Array.from(area.querySelectorAll('[name="subTargetDir[]"]')).map(input => input.value);
-                        const secondaryCustomTagArr = Array.from(area.querySelectorAll('[name="secondaryCustomTags[]"]')).map(input => input.value);
+                // Collect secondary search criteria
+                const secondarySearchTexts = Array.from(area.querySelectorAll('[name="secondarySearchText[]"]')).map(input => input.value);
+                const subTargetDirs = Array.from(area.querySelectorAll('[name="subTargetDir[]"]')).map(input => input.value);
+                const secondaryCustomTagArr = Array.from(area.querySelectorAll('[name="secondaryCustomTags[]"]')).map(input => input.value);
 
-                        const checkpointChecked = area.querySelector('[name="checkpointCheckName"]').checked ? 'addCheckpoints' : ''
-                        const loraChecked = area.querySelector('[name="loraCheckName"]').checked ? 'addLoras' : ''
-            
+                const checkpointChecked = area.querySelector('[name="checkpointCheckName"]').checked ? 'addCheckpoints' : ''
+                const loraChecked = area.querySelector('[name="loraCheckName"]').checked ? 'addLoras' : ''
 
-                        // Combine secondary search criteria and sub-target directories
-                        const secondaries = secondarySearchTexts.map((text, i) => ({
-                            secondarySearchText: text,
-                            subTargetDir: subTargetDirs[i] || '',
-                            secondaryCustomTags: secondaryCustomTagArr[i] || '', // Send an empty string if there's no secondary tag
-                        }));
 
-                        // Collect file tags
-                        const primaryCustomTags = area.querySelector('[name="primaryCustomTags"]').value;
-                        //const secondaryCustomTags = area.querySelector('[name="secondaryCustomTags"]').value;                        
-                        console.log('index html primaryCustomTags:' + primaryCustomTags + ' secondaryCustomTags:' + secondaryCustomTagArr.join(','))
+                // Combine secondary search criteria and sub-target directories
+                const secondaries = secondarySearchTexts.map((text, i) => ({
+                    secondarySearchText: text,
+                    subTargetDir: subTargetDirs[i] || '',
+                    secondaryCustomTags: secondaryCustomTagArr[i] || '', // Send an empty string if there's no secondary tag
+                }));
 
-                        return {
-                            id: index, // Unique ID for each search area
-                            searchText: searchText,
-                            targetDir: targetDir,
-                            secondaries: secondaries, // Array containing secondary search criteria and sub-target directories
-                            primaryCustomTags: primaryCustomTags,
-                            checkpointChecked: checkpointChecked,
-                            loraChecked: loraChecked,                            
-                        };
-                    });
+                // Collect file tags
+                const primaryCustomTags = area.querySelector('[name="primaryCustomTags"]').value;
+                //const secondaryCustomTags = area.querySelector('[name="secondaryCustomTags"]').value;                        
+                console.log('index html primaryCustomTags:' + primaryCustomTags + ' secondaryCustomTags:' + secondaryCustomTagArr.join(','))
+
+                return {
+                    id: index, // Unique ID for each search area
+                    searchText: searchText,
+                    targetDir: targetDir,
+                    secondaries: secondaries, // Array containing secondary search criteria and sub-target directories
+                    primaryCustomTags: primaryCustomTags,
+                    checkpointChecked: checkpointChecked,
+                    loraChecked: loraChecked,
+                };
+            });
         }
 
         function displayResults(results) {
@@ -267,9 +362,10 @@
                         <label>Sub-Target Folder:</label>
                         <input type="text" name="subTargetDir[]">
                     </div>
-                    <div>
+                    <div style="display: flex;">
                         <label>Secondary Tags:</label>
-                        <input type="text" name="secondaryCustomTags[]">
+                        <input type="text" name="secondaryCustomTags[]"  data-id="${searchAreaCount}s">
+                        <tag-list id="tagListId" class="tag-list-class" data-id="${searchAreaCount}s"></tag-list>
                     </div>
                     <div>
                         <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Remove This Secondary Search Criteria</button>
@@ -287,12 +383,12 @@
         function toggleDetails(element) {
             const details = element.nextElementSibling; // Find the <ul> element
             details.style.display = details.style.display === "none" ? "block" : "none";
-        }       
+        }
 
         function openModal(imagePath) {
             const modal = document.getElementById('fileModal');
             modal.style.display = 'flex'; // Make the modal visible
-            
+
             const frame = document.getElementById('fileFrame');
             // Set the `src` of `iframe` to `image-viewer.html` with query parameter
             frame.src = `image-viewer.html?imagePath=${encodeURIComponent(imagePath)}`;
@@ -307,7 +403,7 @@
         // Function to add event listener for dynamically created clickable links
         function addClickEventToFileLinks() {
             document.querySelectorAll('.file-link').forEach(link => {
-                link.addEventListener('click', function(event) {
+                link.addEventListener('click', function (event) {
                     event.preventDefault(); // Prevent the default behavior of the link
                     const filePath = this.getAttribute('data-filepath');
                     openModal(filePath);
@@ -315,14 +411,14 @@
             });
         }
 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const modal = document.getElementById('fileModal');
             if (event.target == modal) {
                 modal.style.display = 'none';
             }
         }
 
-        window.addEventListener('message', function(event) {
+        window.addEventListener('message', function (event) {
             const modalContent = document.querySelector('.modal-content');
             const iframe = document.getElementById('fileFrame');
             const dimensions = event.data;
@@ -351,20 +447,11 @@
                 iframe.style.height = '100%'; // Set iframe height to match modal-content
             }
         }, false);
-
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const tagListEl = document.getElementById('tagListId');
-            if (tagListEl) {
-                tagListEl.addEventListener('selectedTagsSet', (event) => {
-                    console.log('selectedTagsSet komponentinden gelen değer:', event.detail);
-                });
-            }
-        });
-
         // Initialize the first search area
         addNewSearch();
-</script>
+    </script>
 
 
 </body>
+
 </html>
