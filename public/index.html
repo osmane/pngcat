@@ -5,50 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Processing Interface</title>
-    <script type="module" src="/components/tag-list.js" defer></script>
     <script defer>
-        document.addEventListener('DOMContentLoaded', () => {
-        // Dinamik bileşenleri yükleme ve hazır olduğunda etkileşime geçme
-             loadDynamicComponent('searchArea-0');
 
-            // Dinamik bileşenden gelen olayları dinleme
-            window.addEventListener('componentReady', (e) => {
-                console.log("Dinamik bileşen hazır!", e.detail);
-                // Gerekirse burada bileşen ile etkileşime geç
-            });
-        });
-
-        function loadDynamicComponent(searchAreaId) {
-            // Dinamik bileşenin yüklenmesi simülasyonu
-            //setTimeout(() => {
-                const primaryContainer = document.getElementById(searchAreaId).getElementsByClassName ('primary-tag-container')[0];
-                primaryContainer.innerHTML += '<tag-list id="tagListId" class="tag-list-class"></tag-list>';
-
-                const secondaryContainer = document.getElementById(searchAreaId).getElementsByClassName ('secondary-tag-container')[0];
-                secondaryContainer.innerHTML += '<tag-list id="tagListId" class="tag-list-class"></tag-list>';
-
-                // Bileşenin hazır olduğunu bildiren özel bir olay yayma
-                const event = new CustomEvent('componentReady', { detail: { message: 'TagList yüklendi.' } });
-                window.dispatchEvent(event);
-            //}, 1000); // Gerçek uygulamada bu, bileşenin yüklenmesi için gereken süreye bağlıdır
-        }
-
-        function updateSharedData(updatedDataArray) {            
-                const sharedDataArr = document.getElementsByName('sharedData')[0].value.split(',');
-                if (!this.arraysEqual(updatedDataArray, sharedDataArr)) {
-                    document.getElementsByName('sharedData')[0].value = updatedDataArray.join(',');
-                    // Güncellenmiş veriyi diğer bileşenlerle paylaşmak için bir yol (örneğin, özel bir olay yayınlayarak)
-                    const event = new CustomEvent('dataUpdated', { detail: updatedDataArray });
-                    window.dispatchEvent(event);
-                }    
-        }
-
-        function arraysEqual(a, b) {
-            return a.length === b.length && a.every((val, index) => val === b[index]);
-        }
-        
     </script>
-    
+    <script type="module" src="/components/tag-list.js" defer></script>
+    <script>
+    </script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -153,20 +116,21 @@
 
         .primary-tag-container {
             display: flex;
-        }
+        }        
     </style>
 </head>
 
 <body>
     <h1>File Processing Interface</h1>
+    <input type="hidden" id="jsonData" name="sharedData" value="PLACEHOLDER">
     <div>
         <label for="sourceDir">Source Folder Path:</label>
         <input type="text" id="sourceDir" name="sourceDir">
     </div>
     <div>
         <label for="sourceDir">Tag source:</label>
-        <input type="text" name="sharedData" value="tag1,tag2,tag3,tag4">
-    </div>    
+        <!-- <input type="text" name="sharedData" value="tag1,tag2,tag3,tag4"> -->
+    </div>
 
     <div id="searchAreaContainer">
         <!-- First search area will be placed here -->
@@ -183,6 +147,17 @@
 
     <script>
         let searchAreaCount = 0;
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/get-data');
+                const data = await response.json();
+                document.getElementsByName('sharedData')[0].value = data.tags.join(',');
+                console.log('Data: ', data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
 
         function addNewSearch() {
             const container = document.getElementById('searchAreaContainer');
@@ -203,7 +178,6 @@
                         <div class="primary-tag-container">
                             <label>Primary Tags:</label>
                             <input type="text" name="primaryCustomTags" data-id="1p">
-                            <!-- <tag-list id="tagListId" class="tag-list-class" ></tag-list> -->
                         </div>
                     </div>
 
@@ -220,7 +194,7 @@
                         </div>
                         <div class="loraCheckClass">
                             <input type="checkbox" id="loraCheckId" name="loraCheckName" value="addLoras">
-                            <label for="loraCheckId">Add LORAs name as tag</label>
+                            <label for="loraCheckId">Add LORA names as tag</label>
                         </div>
                     </div>
                     <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Remove This Search Area</button>
@@ -228,18 +202,47 @@
                 </div>
             `;
 
-            container.appendChild(newSearchArea);
+            container.appendChild(newSearchArea);           
 
-            // Automatically add a secondary search criteria for the newly added search area
+            
+            const primaryContainer = newSearchArea.getElementsByClassName('primary-tag-container')[0];
+            loadDynamicComponent(newSearchArea.id, primaryContainer, 0)
+            
             const newSecondariesContainer = newSearchArea.querySelector('.secondariesContainer');
             addNewSecondaryCriteria(newSecondariesContainer);
 
-            searchAreaCount++;
-            if (container.getElementsByClassName('tag-list-class').length > 0) {
-                loadDynamicComponent(newSearchArea.id) 
-            }            
             updateRemoveButtonsVisibility();
+
+            searchAreaCount++;
         }
+
+        function loadDynamicComponent(searchAreaId, container, order) {            
+                //const primaryContainer = document.getElementById(searchAreaId).getElementsByClassName('primary-tag-container')[0];
+                container.innerHTML += '<tag-list id="tagList-' + searchAreaId + '-order-' + order + '" class="tag-list-class primary-tag-list"></tag-list>';
+            
+                //const secondaryContainer = document.getElementById(searchAreaId).getElementsByClassName('secondary-tag-container')[0];
+                //secondaryContainer.innerHTML += '<tag-list id="tagList--"' + searchAreaId + '" class="tag-list-class secondary-tag-list"></tag-list>';            
+        }        
+
+        (async function () {
+            await fetchData();
+            addNewSearch();
+        })();
+
+        function updateSharedData(updatedDataArray) {
+            const sharedDataArr = document.getElementsByName('sharedData')[0].value.split(',');
+            if (!this.arraysEqual(updatedDataArray, sharedDataArr)) {
+                document.getElementsByName('sharedData')[0].value = updatedDataArray.join(',');
+                // Güncellenmiş veriyi diğer bileşenlerle paylaşmak için bir yol (örneğin, özel bir olay yayınlayarak)
+                const event = new CustomEvent('dataUpdated', { detail: updatedDataArray });
+                window.dispatchEvent(event);
+            }
+        }
+
+        function arraysEqual(a, b) {
+            return a.length === b.length && a.every((val, index) => val === b[index]);
+        }
+
 
         function removeSearchArea(searchArea) {
             if (document.querySelectorAll('.spawnableSearchArea').length > 1) {
@@ -259,13 +262,17 @@
         function startProcessing() {
             const sourceDir = document.getElementById('sourceDir').value;
             const searchParams = collectSearchParams();
+            const jsonObj = {};
+            const jsonDataValue = document.getElementsByName('sharedData')[0].value;
+            jsonObj["tags"] = jsonDataValue ? jsonDataValue.split(',') : [];
+            const jsonData = jsonDataValue ? jsonObj : null;
 
             fetch('/process-files', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ sourceDir, searchParams }),
+                body: JSON.stringify({ sourceDir, searchParams, jsonData }),
             })
                 .then(response => response.json())
                 .then(data => {
@@ -339,7 +346,6 @@
 
         function addNewSecondaryCriteria(container) {
             const newSecondary = document.createElement('div');
-            newSecondary.setAttribute('class', 'secondary');
             newSecondary.innerHTML = `
                 <div style="display: flex;" class="secondary">
                     <div>
@@ -353,7 +359,6 @@
                     <div class="secondary-tag-container" style="display: flex;">
                         <label>Secondary Tags:</label>
                         <input type="text" name="secondaryCustomTags[]"  data-id="${searchAreaCount}s">
-                        <!-- <tag-list id="tagListId" class="tag-list-class" data-id="${searchAreaCount}s"></tag-list> -->
                     </div>
                     <div>
                         <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Remove This Secondary Search Criteria</button>
@@ -361,6 +366,20 @@
                 </div>
             `;
             container.appendChild(newSecondary);
+            parentSearchAreaId = container.closest('.search-area').id;
+            order = container.getElementsByClassName('secondary-tag-container').length;
+            loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order) 
+
+            //if (newSecondary.getElementsByClassName('tag-list-class').length < 1) {    
+                //loadDynamicComponent(searchAreaId, false, true);
+            //}
+            // Eğer daha önce dinamik bileşen yüklenmişse, yeni secondary bileşen için de yükleme yap
+            //if (newSecondary.getElementsByClassName('tag-list-class').length < 1) {                
+            //const secondaryContainer = newSecondary.getElementsByClassName('secondary-tag-container')[0];
+            //secondaryContainer.innerHTML += '<tag-list id="tagListId" class="tag-list-class"></tag-list>';
+            //const event = new CustomEvent('componentReady', { detail: { message: 'TagList yüklendi.' } });
+            //newSecondary.dispatchEvent(event);
+            //}
         }
 
         function removeThisSecondary(event) {
@@ -387,8 +406,6 @@
             modal.style.display = 'none'; // Hide the modal
         }
 
-
-        // Function to add event listener for dynamically created clickable links
         function addClickEventToFileLinks() {
             document.querySelectorAll('.file-link').forEach(link => {
                 link.addEventListener('click', function (event) {
@@ -435,8 +452,8 @@
                 iframe.style.height = '100%'; // Set iframe height to match modal-content
             }
         }, false);
-        // Initialize the first search area
-        addNewSearch();
+
+
     </script>
 
 

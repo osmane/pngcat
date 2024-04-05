@@ -2,20 +2,26 @@ const express = require('express')
 const { spawn } = require('child_process')
 const path = require('path')
 const app = express()
+const fs = require('fs-extra')
+const jsonfile = require('jsonfile')
 const port = 3000
 
-// Define object mapping file paths to file IDs
-const fileAccessMap = {}
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next(); // Sonraki middleware veya rota işleyiciye geçişi sağlar
+});
 
 app.use(express.json())
 app.use(express.static('public'))
 
+const fileAccessMap = {}
+
 app.post('/process-files', (req, res) => {
-  const { sourceDir, searchParams } = req.body
+  const { sourceDir, searchParams, jsonData } = req.body
 
   const results = []
 
-  async function processEachParam () {
+  async function processEachParam() {
     console.log('Server searchParams: ' + JSON.stringify(searchParams))
     for (const params of searchParams) {
       const { id, searchText, targetDir, secondaries, primaryCustomTags, checkpointChecked, loraChecked } = params
@@ -76,6 +82,23 @@ app.post('/process-files', (req, res) => {
         results.push({ id, error: 'File processing error.' })
       })
     }
+
+    jsonStr = JSON.stringify(jsonData)
+    // console.log('jsonData: ' + jsonStr)
+    if (!!jsonData && jsonData.tags.length > 0) {
+      jsonfile.writeFile('./data/json-tags.json', jsonData, { spaces: 2 })
+        .then(() => {
+          // console.log('JSON başarıyla kaydedildi.');
+          results.push({ jsonDataSaved: 'JSON başarıyla kaydedildi.' });
+        })
+        .catch(err => {
+          console.error('json-tags.json kaydedilemedi:', err);
+          results.push({ jsonDataError: 'json-tags.json kaydedilemedi.' });
+        });
+    }else{
+      console.error('jsonData empty or tags empty.');
+      results.push({ jsonDataError: 'jsonData empty or tags empty.' });
+    }
     // Send the obtained results to the client after all processes are completed
     res.json({ results })
   }
@@ -97,10 +120,22 @@ app.post('/process-files', (req, res) => {
   })
 })
 
-function generateSecureId () {
-  // Simple ID generator, a more secure method should be used in reality
+function generateSecureId() {
   return Math.random().toString(36).substring(2, 15)
 }
+
+app.get('/get-data', (req, res) => {
+  console.log('GET /')
+  jsonfile.readFile('data/json-tags.json', 'utf8', (err, obj) => {
+    if (err) {
+      console.error('hata var bilader: ' + err);
+      return res.status(500).send('Dosya okunamadı.');
+    } else {
+      console.log('jsonData: ' + JSON.stringify(obj))
+    }
+    res.json(obj);
+  });
+});
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`)

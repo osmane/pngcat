@@ -29,6 +29,7 @@ class TagList extends HTMLElement {
                 align-items: flex-start;
                 position: absolute;
                 background: white;
+                z-index: 1;
             }
         
             .pre-tag {
