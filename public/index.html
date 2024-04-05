@@ -122,6 +122,7 @@
 
 <body>
     <h1>File Processing Interface</h1>
+    <input type="hidden" id="lastSearchAreaId" value="0">
     <input type="hidden" id="jsonData" name="sharedData" value="PLACEHOLDER">
     <div>
         <label for="sourceDir">Source Folder Path:</label>
@@ -146,8 +147,7 @@
     </div>
 
     <script>
-        let searchAreaCount = 0;
-
+        var lastSearchAreaId = parseInt(document.getElementById('lastSearchAreaId').value, 10);
         async function fetchData() {
             try {
                 const response = await fetch('/get-data');
@@ -162,7 +162,7 @@
         function addNewSearch() {
             const container = document.getElementById('searchAreaContainer');
             const newSearchArea = document.createElement('div');
-            newSearchArea.setAttribute('id', 'searchArea-' + searchAreaCount);
+            newSearchArea.setAttribute('id', 'searchArea-' + lastSearchAreaId);
             newSearchArea.setAttribute('class', 'search-area');
             newSearchArea.innerHTML = `
                 <div class="spawnableSearchArea">
@@ -177,15 +177,16 @@
                         </div>
                         <div class="primary-tag-container">
                             <label>Primary Tags:</label>
-                            <input type="text" name="primaryCustomTags" data-id="1p">
+                            <input type="hidden" name="primaryCustomTags" data-id="1p">
                         </div>
                     </div>
 
                     <div class="secondariesContainer">
                         
                     </div>
-                    <div>
+                    <div>                        
                         <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;">Add New Secondary Search Criteria</button>
+                        <input type="hidden" id="lastSecondaryCriteriaId" value="0">
                     </div>
                     <div class="sdTagsContainer" style="display: flex;">
                         <div class="checkpointCheckClass">
@@ -197,8 +198,8 @@
                             <label for="loraCheckId">Add LORA names as tag</label>
                         </div>
                     </div>
-                    <button onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Remove This Search Area</button>
-                    <div class="results" id="results-${searchAreaCount}">Processing results will appear here.</div>                                    
+                    <button class="remove-sa-btn" onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Remove This Search Area</button>
+                    <div class="results" id="results-${lastSearchAreaId}">Processing results will appear here.</div>                                    
                 </div>
             `;
 
@@ -212,8 +213,9 @@
             addNewSecondaryCriteria(newSecondariesContainer);
 
             updateRemoveButtonsVisibility();
-
-            searchAreaCount++;
+            
+            lastSearchAreaId++;
+            document.getElementById('lastSearchAreaId').value = lastSearchAreaId;
         }
 
         function loadDynamicComponent(searchAreaId, container, order) {
@@ -225,23 +227,28 @@
             addNewSearch();
         })();
 
-        function updateTagHistory(tagHistory, selectedTags, parentEl) {
-            const localSelectedTags = parentEl.querySelector('input').value.split(',');
-            if (!this.arraysEqual(selectedTags, localSelectedTags)) {
-                parentEl.querySelector('input').value = selectedTags.join(',');
-                
-                /* const event = new CustomEvent('dataUpdated', { detail: selectedTags });
-                window.dispatchEvent(event); */
-            }
+        function updateTagHistory(tagHistory) {
 
             const sharedHistoryTags = document.getElementsByName('sharedData')[0].value.split(',');
             if (!this.arraysEqual(tagHistory, sharedHistoryTags)) {
                 document.getElementsByName('sharedData')[0].value = tagHistory.join(',');
-                
-                const event = new CustomEvent('dataUpdated', { detail: tagHistory });
+
+                const event = new CustomEvent('tagsHistoryUpdated', { detail: tagHistory });
                 window.dispatchEvent(event);
-            }           
-            
+            }
+
+        }
+
+        function updateLocalSelectedTags(selectedTags, parentEl) {
+            const localSelectedTags = parentEl.querySelector('input').value.split(',');
+            //if (!this.arraysEqual(selectedTags, localSelectedTags)) {
+            if (selectedTags && selectedTags.length > 0) {
+                console.log('event selectedTagsUpdated:' + selectedTags)
+                parentEl.querySelector('input').value = selectedTags.join(',');
+                const event = new CustomEvent('selectedTagsUpdated', { detail: selectedTags });
+                window.dispatchEvent(event);
+            }
+            //}
         }
 
         function arraysEqual(a, b) {
@@ -250,16 +257,17 @@
 
         function removeSearchArea(searchArea) {
             if (document.querySelectorAll('.spawnableSearchArea').length > 1) {
-                searchArea.parentNode.removeChild(searchArea);
-                updateRemoveButtonsVisibility();
+                const searchAreaToBeRemoved = event.target.closest('.search-area');
+                searchAreaToBeRemoved.remove();
             }
+            updateRemoveButtonsVisibility()
         }
 
         function updateRemoveButtonsVisibility() {
             // Check all remove buttons and hide the button if there's only one search area
             document.querySelectorAll('.spawnableSearchArea').forEach(area => {
-                const removeButton = area.querySelector('button');
-                removeButton.style.display = searchAreaCount > 1 ? 'block' : 'none';
+                const removeButton = area.querySelector('.remove-sa-btn');
+                removeButton.style.display = document.querySelectorAll('.spawnableSearchArea').length > 1 ? 'block' : 'none';
             });
         }
 
@@ -362,22 +370,28 @@
                     </div>
                     <div class="secondary-tag-container" style="display: flex;">
                         <label>Secondary Tags:</label>
-                        <input type="text" name="secondaryCustomTags[]"  data-id="${searchAreaCount}s">
+                        <input type="hidden" name="secondaryCustomTags[]"  data-id="${lastSearchAreaId}s">
                     </div>
                     <div>
                         <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Remove This Secondary Search Criteria</button>
                     </div>
                 </div>
             `;
+            
+
             container.appendChild(newSecondary);
+            lastSecondaryCriteriaId = parseInt(document.getElementById('lastSecondaryCriteriaId').value, 10);
+            lastSecondaryCriteriaId++;
+            document.getElementById('lastSecondaryCriteriaId').value = lastSearchAreaId;
+
             parentSearchAreaId = container.closest('.search-area').id;
-            order = container.getElementsByClassName('secondary-tag-container').length;
+            order = lastSecondaryCriteriaId;
             loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order)
         }
 
-        function removeThisSecondary(event) {
-            const secondaryToBeRemoved = event.target.closest('.secondary');
-            secondaryToBeRemoved.parentNode.removeChild(secondaryToBeRemoved);
+        function removeThisSecondary(event) {            
+            const secondaryToBeRemoved = event.target.closest('.secondary').closest('div');
+            secondaryToBeRemoved.parentNode.remove(secondaryToBeRemoved);
         }
 
         function toggleDetails(element) {

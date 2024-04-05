@@ -4,7 +4,7 @@ class TagList extends HTMLElement {
     this.attachShadow({ mode: 'open' })
     this._tagsFromDb = [] // ['Surreal art', 'Abstract painting', 'Neon lights', 'Glowing sunset', 'Digital artwork']
     this._usableTags = [] // [...new Set(this._tagsFromDb)]
-    this.selectedTags = []
+    this._selectedTags = []
     this.shadowRoot.innerHTML = `
             <style>
             body {
@@ -211,12 +211,12 @@ class TagList extends HTMLElement {
   }
 
   addOrSelectTag(newTag, eventSource) {
-    if (this.selectedTags.includes(newTag) && (eventSource === 'pre-tag')) {
-      this.selectedTags = this.selectedTags.filter(t => t !== newTag)
+    if (this._selectedTags.includes(newTag) && (eventSource === 'pre-tag')) {
+      this.selectedTags = this._selectedTags.filter(t => t !== newTag)
     } else {
-      if (!this.selectedTags.includes(newTag)) {
-        this.selectedTags.push(newTag)
-        this.selectedTags = this.selectedTags // to trigger setter, do not remove
+      if (!this._selectedTags.includes(newTag)) {
+        this._selectedTags.push(newTag)
+        this.selectedTags = this._selectedTags // to trigger setter, do not remove
       }
       if (!this.usableTags.includes(newTag)) {
         this.usableTags.push(newTag)
@@ -239,7 +239,7 @@ class TagList extends HTMLElement {
     this.usableTags.forEach(tag => {
       const tagEl = document.createElement('div')
       tagEl.className = 'pre-tag'
-      if (this.selectedTags.includes(tag)) {
+      if (this._selectedTags.includes(tag)) {
         tagEl.classList.add('selected-tag')
       } else {
         tagEl.classList.remove('selected-tag')
@@ -259,7 +259,7 @@ class TagList extends HTMLElement {
   updateSelectedTagsDisplay() {
     const realTagContainer = this.shadowRoot.getElementById('real-tag-container')
     realTagContainer.querySelectorAll('.real-tag').forEach(tag => tag.remove())
-    this.selectedTags.forEach(tag => {
+    this._selectedTags.forEach(tag => {
       const tagEl = document.createElement('div')
       tagEl.className = 'real-tag'
       // tagEl.textContent = tag
@@ -295,12 +295,19 @@ class TagList extends HTMLElement {
     if (!this.arraysEqual(this._tagsFromDb, tags)) {
       this._tagsFromDb = tags
       this._usableTags = [...new Set(this._tagsFromDb)]
-      console.log('_tagsFromDb in set tagsFromDb: ' + this._tagsFromDb)
+      // console.log('_tagsFromDb in set tagsFromDb: ' + this._tagsFromDb)
       this.updateUsableTagsDisplay()
-      console.log('tagsFromDb set')      
+      // console.log('tagsFromDb set')      
       this.updateUserInteraction()
     }    
   }
+
+  set selectedTags(tags) {
+    this._selectedTags = tags
+    console.log('_selectedTags in set selectedTags: ' + this._selectedTags)
+    this.updateDocSelectedTags()
+  }
+
 
   arraysEqual(a, b) {
       return a.length === b.length && a.every((val, index) => val === b[index]);
@@ -318,10 +325,15 @@ class TagList extends HTMLElement {
     //console.log('usableTags set')
   }
 
+  get selectedTags() {  
+    return this._selectedTags
+  }
+
   connectedCallback() {
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       this.loadDataFromPage();
-      window.addEventListener('dataUpdated', this.handleDataUpdate.bind(this));
+      window.addEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
+      window.addEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
     } 
   }
 
@@ -338,11 +350,17 @@ class TagList extends HTMLElement {
 
   // Örnek: Kullanıcı etkileşimi sonucu veriyi güncelleme ve anasayfaya bildirme
   updateUserInteraction(newData) {    
-    updateTagHistory(this.tagsFromDb, this.selectedTags, this.parentElement); // Anasayfadaki fonksiyonu çağır
+    updateTagHistory(this.tagsFromDb); // Anasayfadaki fonksiyonu çağır
   }
 
+  updateDocSelectedTags() {    
+    updateLocalSelectedTags(this.selectedTags, this.parentElement); // Anasayfadaki fonksiyonu çağır
+  }
+
+
   disconnectedCallback() {
-    window.removeEventListener('dataUpdated', this.handleDataUpdate.bind(this));
+    window.removeEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
+    window.removeEventListener('selectedTagsUpdated', this.handleDataUpdate.bind(this));
   }
 }
 
