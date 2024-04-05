@@ -14,9 +14,9 @@ class TagList extends HTMLElement {
             .container {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 3px;
+                gap: 1px;
                 border: 1px solid #ccc;
-                padding: 3px;
+                padding: 1px;
                 align-items: flex-start;
             }
         
@@ -48,8 +48,8 @@ class TagList extends HTMLElement {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 4px 4px;
-                font-size: 13px;
+                padding: 1px 4px;
+                font-size: 12px;
                 background-color: #f5a439;
                 border: 1px solid #fed7aa;
                 ;
@@ -85,13 +85,13 @@ class TagList extends HTMLElement {
                 border: 0;
             }
         
-            #real-tag-definer {
+            .real-tag-definer-cl {
                 width: 80px;
                 order: 1;
                 border: 0;
                 outline: none;
                 background: #f9f6f6;
-                height: 30px;
+                height: 21px;
                 padding-top: 0px;
                 margin-top: 0px;
                 min-width: 80px;
@@ -123,9 +123,12 @@ class TagList extends HTMLElement {
             .right-margined-title {
                 margin-left: auto;
             }
+            .real-tag-container-cl {
+              background: #f9f6f6;
+            }
             </style>
-            <div class="container" id="real-tag-container">
-                <input type="text" id="real-tag-definer" placeholder="Define a tag">
+            <div class="container real-tag-container-cl" id="real-tag-container">
+                <input type="text" id="real-tag-definer" class="real-tag-definer-cl" placeholder="Define a tag">
             </div>
             <div class="top-container" id="pre-tag-top-container" style="display: none;">
                 <div class="container" id="add-tag-btn-top-container">
@@ -145,6 +148,7 @@ class TagList extends HTMLElement {
 
     this.shadowRoot.querySelector('#real-tag-container').addEventListener('click', () => {
       this.shadowRoot.querySelector('#pre-tag-top-container').style.display = 'block'
+      this.shadowRoot.querySelector('#real-tag-container input[type="text"]').focus();      
     })
 
     realTagDefiner.addEventListener('input', (event) => {
@@ -157,13 +161,12 @@ class TagList extends HTMLElement {
       preTagTopContainer.style.display = 'block'
     })
 
-    realTagDefiner.addEventListener('keydown', (event) => {
-      if (event.key === 'Tab' && event.target.value.trim() !== '') {
-        event.preventDefault()
-        this.addOrSelectTag(event.target.value.trim(), 'tab')
-        // console.log(event.target)
+    realTagDefiner.addEventListener('keydown', (event) => {      
+      if ((event.key === 'Tab' || event.key === 'Enter') && event.target.value.trim() !== '') {
+        event.preventDefault(); 
+        this.addOrSelectTag(event.target.value.trim(), event.key === 'Tab' ? 'tab' : 'enter');        
       }
-    })
+    });
 
     this.shadowRoot.addEventListener('click', (event) => {
       if (event.target.classList.contains('delete-btn') ||
@@ -202,7 +205,7 @@ class TagList extends HTMLElement {
 
     if (value.trim()) {
       const addButton = document.createElement('button')
-      addButton.textContent = `Click to add "${value}" (TAB)`
+      addButton.textContent = `Click to add "${value}" (Tab or Enter)`
       addButton.addEventListener('click', () => {
         this.addOrSelectTag(value.trim(), 'button')
       })

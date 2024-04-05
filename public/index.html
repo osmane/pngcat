@@ -14,15 +14,17 @@
 
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Source Sans Pro, ui-sans-serif, system-ui, sans-serif;
             padding: 20px;
+            font-size: 11pt;
         }
 
         .results {
-            margin-top: 20px;
+            margin-top: 10px;
             padding: 10px;
             background-color: #f0f0f0;
             border: 1px solid #ddd;
+            margin-bottom: 20px;
         }
 
         #fileList {
@@ -42,14 +44,14 @@
 
         /* Updated styles */
         .secondariesContainer {
-            display: flex;
+            /* display: flex; */
             /* Align secondary sections side by side */
-            flex-direction: column;
+            /* flex-direction: column; */
             /* Arrange them vertically */
         }
 
         .secondary {
-            display: flex;
+            /*display: flex;*/
             /* Align each secondary section horizontally */
             margin-bottom: 10px;
             /* Spacing between sections */
@@ -114,9 +116,88 @@
             /* Maintain aspect ratio */
         }
 
-        .primary-tag-container {
+        /*.primary-tag-container {
             display: flex;
+        }*/
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap; /* İçerik çok uzunsa, yeni satıra geçmesine izin ver */
         }
+
+        .flex-item {
+            display: flex;
+            margin-bottom: 10px; /* Alt elemanlar arası boşluk */
+            /* height: 22px; */
+        }
+
+        .flex-item label {
+            min-width: 145px;
+            margin-right: 10px;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        /* İsteğe bağlı: Giriş alanlarının genişliğini kontrol etmek için */
+        .flex-item input[type="text"], 
+        .flex-item .tag-list-class {
+            flex-grow: 1; /* Kullanılabilir alanı doldur */
+            font-size: 12px;
+        }
+
+        .tag-list-class {
+            max-width: 600px;
+            min-width: 300px;
+        }
+
+        .main-props {
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        input[type="text"] {
+            border-radius: 3px;
+            height: 18px;
+            background: #f9f6f6;
+            border: 1px solid #ccc;
+        }
+
+        .svelte-1xsj8nn {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .wrap-inner {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 6px calc(2* 6px);
+        }
+
+        .secondary-wrap.svelte-1xsj8nn.svelte-1xsj8nn.svelte-1xsj8nn {
+            display: flex;
+            flex: 1 1 0%;
+            align-items: center;
+            border: none;
+            min-width: min-content;
+        }
+
+        input.svelte-1xsj8nn.svelte-1xsj8nn.svelte-1xsj8nn {
+            margin: 4px;
+            outline: none;
+            border: none;
+            background: inherit;
+            width: 100%;
+            color: #1f2937;
+        }
+
+        .sd-container{
+            box-sizing: border-box;
+            border-width: 0;
+            border-style: solid;
+        }
+
     </style>
 </head>
 
@@ -124,13 +205,22 @@
     <h1>File Processing Interface</h1>
     <input type="hidden" id="lastSearchAreaId" value="0">
     <input type="hidden" id="jsonData" name="sharedData" value="PLACEHOLDER">
-    <div>
-        <label for="sourceDir">Source Folder Path:</label>
-        <input type="text" id="sourceDir" name="sourceDir">
+    
+    <div class="main-props svelte-1xsj8nn sd-container">
+        <span class="svelte-1gfkn6j">Source Folder Path</span>
+        <div class="wrap svelte-1xsj8nn">
+            <div class="wrap-inner svelte-1xsj8nn">
+                <div class="secondary-wrap svelte-1xsj8nn">
+                    <input class="border-none svelte-1xsj8nn" autocomplete="off" type="text" id="sourceDir" name="sourceDir">
+                    <svg class="dropdown-arrow svelte-p5edak" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                        <path d="M5 8l4 4 4-4z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-        <label for="sourceDir">Tag source:</label>
-        <!-- <input type="text" name="sharedData" value="tag1,tag2,tag3,tag4"> -->
+
+    <div>        
     </div>
 
     <div id="searchAreaContainer">
@@ -166,16 +256,16 @@
             newSearchArea.setAttribute('class', 'search-area');
             newSearchArea.innerHTML = `
                 <div class="spawnableSearchArea">
-                    <div style="display: flex;">
-                        <div>
+                    <div class="flex-container">
+                        <div class="flex-item">
                             <label>Text to Search:</label>
                             <input type="text" name="searchText">
                         </div>
-                        <div>
+                        <div class="flex-item">
                             <label>Target Folder:</label>
                             <input type="text" name="targetDir">
                         </div>
-                        <div class="primary-tag-container">
+                        <div class="flex-item primary-tag-container">
                             <label>Primary Tags:</label>
                             <input type="hidden" name="primaryCustomTags" data-id="1p">
                         </div>
@@ -359,21 +449,21 @@
         function addNewSecondaryCriteria(container) {
             const newSecondary = document.createElement('div');
             newSecondary.innerHTML = `
-                <div style="display: flex;" class="secondary">
-                    <div>
+                <div style="display: flex;" class="flex-container secondary">
+                    <div class="flex-item">
                         <label>Secondary Text to Search:</label>
                         <input type="text" name="secondarySearchText[]">
                     </div>
-                    <div>
+                    <div class="flex-item">
                         <label>Sub-Target Folder:</label>
                         <input type="text" name="subTargetDir[]">
                     </div>
-                    <div class="secondary-tag-container" style="display: flex;">
+                    <div class="flex-item secondary-tag-container" style="display: flex;">
                         <label>Secondary Tags:</label>
                         <input type="hidden" name="secondaryCustomTags[]"  data-id="${lastSearchAreaId}s">
                     </div>
-                    <div>
-                        <button onclick="removeThisSecondary(event)" style="margin-top: 5px;">Remove This Secondary Search Criteria</button>
+                    <div class="flex-item">
+                        <button onclick="removeThisSecondary(event)" style="margin-top: auto;margin-bottom: auto;" title="Remove This Secondary Search Criteria">Remove</button>
                     </div>
                 </div>
             `;
