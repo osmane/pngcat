@@ -116,7 +116,7 @@
 
         .primary-tag-container {
             display: flex;
-        }        
+        }
     </style>
 </head>
 
@@ -202,12 +202,12 @@
                 </div>
             `;
 
-            container.appendChild(newSearchArea);           
+            container.appendChild(newSearchArea);
 
-            
+
             const primaryContainer = newSearchArea.getElementsByClassName('primary-tag-container')[0];
             loadDynamicComponent(newSearchArea.id, primaryContainer, 0)
-            
+
             const newSecondariesContainer = newSearchArea.querySelector('.secondariesContainer');
             addNewSecondaryCriteria(newSecondariesContainer);
 
@@ -216,33 +216,37 @@
             searchAreaCount++;
         }
 
-        function loadDynamicComponent(searchAreaId, container, order) {            
-                //const primaryContainer = document.getElementById(searchAreaId).getElementsByClassName('primary-tag-container')[0];
-                container.innerHTML += '<tag-list id="tagList-' + searchAreaId + '-order-' + order + '" class="tag-list-class primary-tag-list"></tag-list>';
-            
-                //const secondaryContainer = document.getElementById(searchAreaId).getElementsByClassName('secondary-tag-container')[0];
-                //secondaryContainer.innerHTML += '<tag-list id="tagList--"' + searchAreaId + '" class="tag-list-class secondary-tag-list"></tag-list>';            
-        }        
+        function loadDynamicComponent(searchAreaId, container, order) {
+            container.innerHTML += '<tag-list id="tagList-' + searchAreaId + '-order-' + order + '" class="tag-list-class primary-tag-list"></tag-list>';
+        }
 
         (async function () {
             await fetchData();
             addNewSearch();
         })();
 
-        function updateSharedData(updatedDataArray) {
-            const sharedDataArr = document.getElementsByName('sharedData')[0].value.split(',');
-            if (!this.arraysEqual(updatedDataArray, sharedDataArr)) {
-                document.getElementsByName('sharedData')[0].value = updatedDataArray.join(',');
-                // Güncellenmiş veriyi diğer bileşenlerle paylaşmak için bir yol (örneğin, özel bir olay yayınlayarak)
-                const event = new CustomEvent('dataUpdated', { detail: updatedDataArray });
-                window.dispatchEvent(event);
+        function updateTagHistory(tagHistory, selectedTags, parentEl) {
+            const localSelectedTags = parentEl.querySelector('input').value.split(',');
+            if (!this.arraysEqual(selectedTags, localSelectedTags)) {
+                parentEl.querySelector('input').value = selectedTags.join(',');
+                
+                /* const event = new CustomEvent('dataUpdated', { detail: selectedTags });
+                window.dispatchEvent(event); */
             }
+
+            const sharedHistoryTags = document.getElementsByName('sharedData')[0].value.split(',');
+            if (!this.arraysEqual(tagHistory, sharedHistoryTags)) {
+                document.getElementsByName('sharedData')[0].value = tagHistory.join(',');
+                
+                const event = new CustomEvent('dataUpdated', { detail: tagHistory });
+                window.dispatchEvent(event);
+            }           
+            
         }
 
         function arraysEqual(a, b) {
             return a.length === b.length && a.every((val, index) => val === b[index]);
         }
-
 
         function removeSearchArea(searchArea) {
             if (document.querySelectorAll('.spawnableSearchArea').length > 1) {
@@ -368,18 +372,7 @@
             container.appendChild(newSecondary);
             parentSearchAreaId = container.closest('.search-area').id;
             order = container.getElementsByClassName('secondary-tag-container').length;
-            loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order) 
-
-            //if (newSecondary.getElementsByClassName('tag-list-class').length < 1) {    
-                //loadDynamicComponent(searchAreaId, false, true);
-            //}
-            // Eğer daha önce dinamik bileşen yüklenmişse, yeni secondary bileşen için de yükleme yap
-            //if (newSecondary.getElementsByClassName('tag-list-class').length < 1) {                
-            //const secondaryContainer = newSecondary.getElementsByClassName('secondary-tag-container')[0];
-            //secondaryContainer.innerHTML += '<tag-list id="tagListId" class="tag-list-class"></tag-list>';
-            //const event = new CustomEvent('componentReady', { detail: { message: 'TagList yüklendi.' } });
-            //newSecondary.dispatchEvent(event);
-            //}
+            loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order)
         }
 
         function removeThisSecondary(event) {

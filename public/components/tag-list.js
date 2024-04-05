@@ -338,7 +338,7 @@ class TagList extends HTMLElement {
 
   // Örnek: Kullanıcı etkileşimi sonucu veriyi güncelleme ve anasayfaya bildirme
   updateUserInteraction(newData) {    
-    updateSharedData(this.tagsFromDb); // Anasayfadaki fonksiyonu çağır
+    updateTagHistory(this.tagsFromDb, this.selectedTags, this.parentElement); // Anasayfadaki fonksiyonu çağır
   }
 
   disconnectedCallback() {
