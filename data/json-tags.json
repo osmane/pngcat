@@ -39,6 +39,34 @@
     "Photorealism",
     "Concept art",
     "Pixel art",
-    "Graffiti art"
+    "glossy lips"
+  ],
+  "sourceDir": [
+    "D:\\temp\\source",
+    "D:\\temp\\source2",
+    "D:\\temp\\source3",
+    "D:\\temp\\source4",
+    "D:\\temp\\source5",
+    "D:\\temp\\source6"
+  ],
+  "searchText": [
+    "AslihanGurbuz01",
+    "SerayKaya01",
+    "SelinKara01"    
+  ],
+  "targetDir": [
+    "D:\\temp\\target",
+    "D:\\temp\\target2",
+    "D:\\temp\\target3"
+  ],
+  "secondarySearchText": [
+    "nude girl",
+    "glossy lips",
+    "perfect body"
+  ],
+  "subTargetDir": [
+    "B",
+    "glossylips",
+    "figure"    
   ]
 }

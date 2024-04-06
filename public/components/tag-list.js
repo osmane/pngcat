@@ -341,7 +341,7 @@ class TagList extends HTMLElement {
   }
 
   loadDataFromPage() {
-    const sharedDataEl = document.getElementsByName('sharedData')[0];
+    const sharedDataEl = document.getElementsByName('sharedTagData')[0];
     const sharedDataValue = sharedDataEl.value;
     this.tagsFromDb = sharedDataValue.split(',');
     this.init(); 
@@ -356,10 +356,21 @@ class TagList extends HTMLElement {
     updateTagHistory(this.tagsFromDb); // Anasayfadaki fonksiyonu çağır
   }
 
-  updateDocSelectedTags() {    
-    updateLocalSelectedTags(this.selectedTags, this.parentElement); // Anasayfadaki fonksiyonu çağır
+  findHiddenInputInAncestors(element) {
+      let parent = element.parentElement;
+      while (parent !== null && parent.tagName !== 'BODY') {
+          const inputs = Array.from(parent.children).filter(child => ((child.tagName === 'INPUT') && (child.type === 'hidden')));
+          if (inputs.length > 0) {
+              return inputs[0];
+          }
+          parent = parent.parentElement;
+      }    
+      return null;
   }
 
+  updateDocSelectedTags() {    
+    updateLocalSelectedTags(this.selectedTags, this.findHiddenInputInAncestors(this)); // Anasayfadaki fonksiyonu çağır
+  }
 
   disconnectedCallback() {
     window.removeEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));

@@ -22,7 +22,13 @@ app.post('/process-files', (req, res) => {
   const results = []
 
   async function processEachParam() {
-    console.log('Server searchParams: ' + JSON.stringify(searchParams))
+    console.log('Server searchParams: ' + JSON.stringify(searchParams))    
+    let uniqueSourceDirs = [];
+    let uniqueSearchTexts = [];
+    let uniqueTargetDirs = [];
+    let uniqueSecondarySearchTexts = [];
+    let uniqueSubTargetDirs = [];
+
     for (const params of searchParams) {
       const { id, searchText, targetDir, secondaries, primaryCustomTags, checkpointChecked, loraChecked } = params
       const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|')
@@ -81,10 +87,44 @@ app.post('/process-files', (req, res) => {
         // Add results even in case of any error
         results.push({ id, error: 'File processing error.' })
       })
+
+      uniqueSourceDirs.push(sourceDir)
+      uniqueSearchTexts.push(searchText)
+      uniqueTargetDirs.push(targetDir)
+      uniqueSecondarySearchTexts = uniqueSecondarySearchTexts.concat(secondarySearchTexts)      
+      uniqueSubTargetDirs = uniqueSubTargetDirs.concat(subTargetDirs)
+      
     }
 
-    jsonStr = JSON.stringify(jsonData)
-    // console.log('jsonData: ' + jsonStr)
+    try {
+        const response = await fetch('/get-data');
+        const data = await response.json();
+        //document.getElementsByName('sharedData')[0].value = data.tags.join(',');
+        uniqueSourceDirs = uniqueSourceDirs.concat(data.tags.sourceDir.join(','))
+        uniqueSearchTexts = uniqueSearchTexts.concat(data.tags.searchText.join(','))
+        uniqueTargetDirs = uniqueTargetDirs.concat(data.tags.targetDir.join(','))
+        uniqueSecondarySearchTexts = uniqueSecondarySearchTexts.concat(data.tags.secondarySearchTexts.join(','))      
+        uniqueSubTargetDirs = uniqueSubTargetDirs.concat(data.tags.subTargetDirs.join(','))
+    } catch (error) {
+        console.error('Error:', error);
+    }
+
+    uniqueSourceDirs = [...new Set(uniqueSourceDirs)]
+    uniqueSearchTexts = [...new Set(uniqueSearchTexts)]
+    uniqueTargetDirs = [...new Set(uniqueTargetDirs)]
+    uniqueSecondarySearchTexts = [...new Set(uniqueSecondarySearchTexts)]
+    uniqueSubTargetDirs = [...new Set(uniqueSubTargetDirs)]
+    
+    jsonData.sourceDir = uniqueSourceDirs
+    jsonData.searchText = uniqueSearchTexts
+    jsonData.targetDir = uniqueTargetDirs
+    jsonData.secondarySearchText = uniqueSecondarySearchTexts
+    jsonData.subTargetDir = uniqueSubTargetDirs
+
+    
+
+     jsonStr = JSON.stringify(jsonData)
+     console.log('jsonData: ' + jsonStr)
     if (!!jsonData && jsonData.tags.length > 0) {
       jsonfile.writeFile('./data/json-tags.json', jsonData, { spaces: 2 })
         .then(() => {
@@ -125,7 +165,7 @@ function generateSecureId() {
 }
 
 app.get('/get-data', (req, res) => {
-  console.log('GET /')
+  
   jsonfile.readFile('data/json-tags.json', 'utf8', (err, obj) => {
     if (err) {
       console.error('hata var bilader: ' + err);
@@ -135,6 +175,7 @@ app.get('/get-data', (req, res) => {
     }
     res.json(obj);
   });
+
 });
 
 app.listen(port, () => {
