@@ -6,7 +6,6 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 1px;
-    border: 1px solid #ccc;
     padding: 1px;
     align-items: flex-start;
 }
@@ -21,6 +20,8 @@ body {
     position: absolute;
     background: white;
     z-index: 1;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);     
+    border-radius: 8px;  
 }
 
 .pre-tag {
@@ -81,7 +82,7 @@ body {
     order: 1;
     border: 0;
     outline: none;
-    background: #f9f6f6;
+    background: #ffffff;
     height: 21px;
     padding-top: 0px;
     margin-top: 0px;
@@ -115,5 +116,5 @@ body {
     margin-left: auto;
 }
 .real-tag-container-cl {
-  background: #f9f6f6;
+  background: #ffffff;
 }

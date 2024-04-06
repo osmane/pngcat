@@ -7,11 +7,9 @@ class TagList extends HTMLElement {
     this._selectedTags = []
     const linkElem = document.createElement('link');
     linkElem.setAttribute('rel', 'stylesheet');
-    linkElem.setAttribute('href', '/components/tag-list.css'); 
-
-    this.shadowRoot.appendChild(linkElem);
+    linkElem.setAttribute('href', '/components/tag-list.css');
+    
     this.shadowRoot.innerHTML = `
-            <style></style>
             <div class="container real-tag-container-cl" id="real-tag-container">
                 <input type="text" id="real-tag-definer" class="real-tag-definer-cl" placeholder="Define a tag">
             </div>
@@ -23,7 +21,7 @@ class TagList extends HTMLElement {
                 <div class="container" id="pre-tag-container"></div>
             </div>
         `
-
+    this.shadowRoot.appendChild(linkElem);
   }
 
   init() {
@@ -38,12 +36,15 @@ class TagList extends HTMLElement {
 
     realTagDefiner.addEventListener('input', (event) => {
       this.updateAddButton(event.target.value)
-      // this.updateUsableTagsDisplay()
     })
 
     realTagDefiner.addEventListener('focus', () => {
       this.updateUsableTagsDisplay()
       preTagTopContainer.style.display = 'block'
+      // preTagTopContainer.style.width = this.style.width
+      const rect = this.getBoundingClientRect();
+      preTagTopContainer.style.width = rect.width + 24 + 'px'
+      preTagTopContainer.style.left = rect.left + window.scrollX-13 + 'px'
     })
 
     realTagDefiner.addEventListener('keydown', (event) => {      
@@ -55,8 +56,7 @@ class TagList extends HTMLElement {
 
     this.shadowRoot.addEventListener('click', (event) => {
       if (event.target.classList.contains('delete-btn') ||
-        (event.target.parentElement && event.target.parentElement.classList.contains('delete-btn'))) {
-        // const tagText = event.target.parentElement.querySelector('.tag-data').textContent.trim()
+        (event.target.parentElement && event.target.parentElement.classList.contains('delete-btn'))) {        
         const upperEl = event.target.closest('.pre-tag') ? event.target.closest('.pre-tag') : event.target.closest('.real-tag')
         const tagText = upperEl.textContent.trim()
         if (upperEl.classList.contains('pre-tag')) {
@@ -104,19 +104,16 @@ class TagList extends HTMLElement {
     } else {
       if (!this._selectedTags.includes(newTag)) {
         this._selectedTags.push(newTag)
-        this.selectedTags = this._selectedTags // to trigger setter, do not remove
+        this.selectedTags = this._selectedTags
       }
       if (!this.usableTags.includes(newTag)) {
         this.usableTags.push(newTag)
-        this.usableTags = this.usableTags // to trigger setter, do not remove
+        this.usableTags = this.usableTags
       }
     }
     this.shadowRoot.getElementById('real-tag-definer').value = ''
     this.updateUsableTagsDisplay()
     this.updateSelectedTagsDisplay()
-    if (eventSource) {
-      // console.log('event source: ' + eventSource)
-    }
     const addNewTagBtnContainer = this.shadowRoot.getElementById('add-new-tag-btn-container')
     addNewTagBtnContainer.innerHTML = ''
   }
@@ -150,8 +147,6 @@ class TagList extends HTMLElement {
     this._selectedTags.forEach(tag => {
       const tagEl = document.createElement('div')
       tagEl.className = 'real-tag'
-      // tagEl.textContent = tag
-
       const dataSpan = document.createElement('span')
       dataSpan.className = 'tag-data'
       dataSpan.textContent = tag
@@ -169,7 +164,6 @@ class TagList extends HTMLElement {
       deleteBtn.title = 'Remove from history'
     }
     tagEl.appendChild(deleteBtn)
-
     const deleteBtnInner = document.createElement('span')
     deleteBtnInner.classList.add('delete-btn-inner')
     deleteBtn.appendChild(deleteBtnInner)
@@ -183,9 +177,7 @@ class TagList extends HTMLElement {
     if (!this.arraysEqual(this._tagsFromDb, tags)) {
       this._tagsFromDb = tags
       this._usableTags = [...new Set(this._tagsFromDb)]
-      // console.log('_tagsFromDb in set tagsFromDb: ' + this._tagsFromDb)
       this.updateUsableTagsDisplay()
-      // console.log('tagsFromDb set')      
       this.updateUserInteraction()
     }    
   }
@@ -202,15 +194,12 @@ class TagList extends HTMLElement {
   }
 
   get usableTags() {
-    //console.log('usableTags get: ' + this._usableTags)
-    //console.log('_tagsFromDb in get usableTags: ' + this._tagsFromDb)
     return this._usableTags
   }
 
   set usableTags(tags) {
     this._usableTags = tags
     this.tagsFromDb = this._usableTags
-    //console.log('usableTags set')
   }
 
   get selectedTags() {  
@@ -236,9 +225,8 @@ class TagList extends HTMLElement {
     this.tagsFromDb = e.detail;
   }
 
-  // Örnek: Kullanıcı etkileşimi sonucu veriyi güncelleme ve anasayfaya bildirme
   updateUserInteraction(newData) {    
-    updateTagHistory(this.tagsFromDb); // Anasayfadaki fonksiyonu çağır
+    updateTagHistory(this.tagsFromDb);
   }
 
   findHiddenInputInAncestors(element) {
@@ -254,7 +242,7 @@ class TagList extends HTMLElement {
   }
 
   updateDocSelectedTags() {    
-    updateLocalSelectedTags(this.selectedTags, this.findHiddenInputInAncestors(this)); // Anasayfadaki fonksiyonu çağır
+    updateLocalSelectedTags(this.selectedTags, this.findHiddenInputInAncestors(this));
   }
 
   disconnectedCallback() {
