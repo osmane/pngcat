@@ -8,7 +8,7 @@ class TagList extends HTMLElement {
     const linkElem = document.createElement('link');
     linkElem.setAttribute('rel', 'stylesheet');
     linkElem.setAttribute('href', '/components/tag-list.css');
-    
+
     this.shadowRoot.innerHTML = `
             <div class="container real-tag-container-cl" id="real-tag-container">
                 <input type="text" id="real-tag-definer" class="real-tag-definer-cl" placeholder="Define a tag">
@@ -22,6 +22,7 @@ class TagList extends HTMLElement {
             </div>
         `
     this.shadowRoot.appendChild(linkElem);
+    this.boundPositionTagList = this.positionTagList.bind(this);
   }
 
   init() {
@@ -31,7 +32,7 @@ class TagList extends HTMLElement {
 
     this.shadowRoot.querySelector('#real-tag-container').addEventListener('click', () => {
       this.shadowRoot.querySelector('#pre-tag-top-container').style.display = 'block'
-      this.shadowRoot.querySelector('#real-tag-container input[type="text"]').focus();      
+      this.shadowRoot.querySelector('#real-tag-container input[type="text"]').focus();
     })
 
     realTagDefiner.addEventListener('input', (event) => {
@@ -40,23 +41,19 @@ class TagList extends HTMLElement {
 
     realTagDefiner.addEventListener('focus', () => {
       this.updateUsableTagsDisplay()
-      preTagTopContainer.style.display = 'block'
-      // preTagTopContainer.style.width = this.style.width
-      const rect = this.getBoundingClientRect();
-      preTagTopContainer.style.width = rect.width + 24 + 'px'
-      preTagTopContainer.style.left = rect.left + window.scrollX-13 + 'px'
+      preTagTopContainer.style.display = 'block'          
     })
 
-    realTagDefiner.addEventListener('keydown', (event) => {      
+    realTagDefiner.addEventListener('keydown', (event) => {
       if ((event.key === 'Tab' || event.key === 'Enter') && event.target.value.trim() !== '') {
-        event.preventDefault(); 
-        this.addOrSelectTag(event.target.value.trim(), event.key === 'Tab' ? 'tab' : 'enter');        
+        event.preventDefault();
+        this.addOrSelectTag(event.target.value.trim(), event.key === 'Tab' ? 'tab' : 'enter');
       }
     });
 
     this.shadowRoot.addEventListener('click', (event) => {
       if (event.target.classList.contains('delete-btn') ||
-        (event.target.parentElement && event.target.parentElement.classList.contains('delete-btn'))) {        
+        (event.target.parentElement && event.target.parentElement.classList.contains('delete-btn'))) {
         const upperEl = event.target.closest('.pre-tag') ? event.target.closest('.pre-tag') : event.target.closest('.real-tag')
         const tagText = upperEl.textContent.trim()
         if (upperEl.classList.contains('pre-tag')) {
@@ -74,6 +71,7 @@ class TagList extends HTMLElement {
 
       this.updateUsableTagsDisplay()
       this.updateSelectedTagsDisplay()
+        
     })
 
     document.addEventListener('click', (event) => {
@@ -82,6 +80,38 @@ class TagList extends HTMLElement {
         preTagTopContainer.style.display = 'none'
       }
     })
+  }
+
+
+  get tagsFromDb() {
+    return this._tagsFromDb
+  }
+
+  set tagsFromDb(tags) {
+    if (!this.arraysEqual(this._tagsFromDb, tags)) {
+      this._tagsFromDb = tags
+      this._usableTags = [...new Set(this._tagsFromDb)]
+      this.updateUsableTagsDisplay()
+      this.updateUserInteraction()
+    }
+  }
+
+  set selectedTags(tags) {
+    this._selectedTags = tags
+    this.updateDocSelectedTags()
+  }
+
+  get selectedTags() {
+    return this._selectedTags
+  }
+
+  get usableTags() {
+    return this._usableTags
+  }
+
+  set usableTags(tags) {
+    this._usableTags = tags
+    this.tagsFromDb = this._usableTags
   }
 
   updateAddButton(value) {
@@ -139,6 +169,7 @@ class TagList extends HTMLElement {
 
       preTagContainer.appendChild(tagEl)
     })
+    this.positionTagList()
   }
 
   updateSelectedTagsDisplay() {
@@ -154,7 +185,6 @@ class TagList extends HTMLElement {
       this.addDeleteButton(tagEl)
       realTagContainer.insertBefore(tagEl, this.shadowRoot.getElementById('real-tag-definer'))
     })
-
   }
 
   addDeleteButton(tagEl) {
@@ -169,85 +199,114 @@ class TagList extends HTMLElement {
     deleteBtn.appendChild(deleteBtnInner)
   }
 
-  get tagsFromDb() {
-    return this._tagsFromDb
-  }
-
-  set tagsFromDb(tags) {
-    if (!this.arraysEqual(this._tagsFromDb, tags)) {
-      this._tagsFromDb = tags
-      this._usableTags = [...new Set(this._tagsFromDb)]
-      this.updateUsableTagsDisplay()
-      this.updateUserInteraction()
-    }    
-  }
-
-  set selectedTags(tags) {
-    this._selectedTags = tags
-    console.log('_selectedTags in set selectedTags: ' + this._selectedTags)
-    this.updateDocSelectedTags()
-  }
-
-
   arraysEqual(a, b) {
-      return a.length === b.length && a.every((val, index) => val === b[index]);
+    return (a.length === b.length && a.every((val, index) => val === b[index]));
   }
 
-  get usableTags() {
-    return this._usableTags
+  positionTagList() {
+    // this'u geçici olarak görünmez ama hesaplanabilir hale getir pre-tag-top-container
+    const preTagTopContainer = this.shadowRoot.getElementById('pre-tag-top-container')
+
+    const currDisplay = preTagTopContainer.style.display
+    if (currDisplay === 'block') {
+      preTagTopContainer.style.visibility = 'hidden';
+      preTagTopContainer.style.display = 'none';
+      preTagTopContainer.style.display = 'block';
+
+      const rect = this.getBoundingClientRect();
+      const containerHeight = preTagTopContainer.offsetHeight;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      if (spaceBelow < containerHeight && spaceAbove > containerHeight) {
+        // Üstte yeterli alan varsa ve altta yeterli alan yoksa
+        preTagTopContainer.style.top = `${rect.top + window.scrollY - containerHeight}px`;
+      } else {
+        // Altta yeterli alan varsa veya üstte yeterli alan yoksa
+        preTagTopContainer.style.top = `${rect.bottom + window.scrollY}px`;
+      }
+
+      console.log('spaceBelow: ' + spaceBelow + ' containerHeight: ' + containerHeight +
+        ' spaceAbove: ' + spaceAbove + ' rect.top ' + rect.top + ' rect.bottom: ' + rect.bottom)
+
+      preTagTopContainer.style.left = `${rect.left + window.scrollX - 13}px`;
+      preTagTopContainer.style.width = `${rect.width + 24}px`;
+
+      // Hesaplamalar tamamlandıktan sonra this'u tam olarak görünür hale getir
+      preTagTopContainer.style.visibility = 'visible';
+
+      this.adjustTagListHeight(preTagTopContainer); // Yüksekliği ve kaydırma çubuğunu ayarla*/
+    }
   }
 
-  set usableTags(tags) {
-    this._usableTags = tags
-    this.tagsFromDb = this._usableTags
+  disableScroll() {
+    document.body.style.overflow = 'hidden'; // Sayfanın geri kalanında kaydırmayı engelle
   }
 
-  get selectedTags() {  
-    return this._selectedTags
+  enableScroll() {
+    document.body.style.overflow = ''; // Sayfa kaydırmasını yeniden etkinleştir
+  }
+
+  adjustTagListHeight(preTagTopContainer) {
+    const taglistRect = this.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - taglistRect.bottom;
+    if (spaceBelow < 20) { // Yetersiz boşluk varsa, this yüksekliğini ayarla
+      preTagTopContainer.style.maxHeight = `${Math.max(taglistRect.height + spaceBelow - 20, 100)}px`; // Minimum 100px yükseklik
+    } else {
+      preTagTopContainer.style.maxHeight = '200px'; // Yeterli boşluk varsa, varsayılan maksimum yüksekliği kullan
+    }
+    preTagTopContainer.style.overflowY = 'auto'; // Her durumda kaydırma çubuğunu etkinleştir
   }
 
   connectedCallback() {
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       this.loadDataFromPage();
       window.addEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
-      window.addEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
-    } 
+      window.addEventListener('resize', this.boundPositionTagList); 
+      window.addEventListener('scroll', this.boundPositionTagList); 
+      // window.addEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
+    }
   }
 
   loadDataFromPage() {
     const sharedDataEl = document.getElementsByName('sharedTagData')[0];
     const sharedDataValue = sharedDataEl.value;
     this.tagsFromDb = sharedDataValue.split(',');
-    this.init(); 
+    this.init();
   }
 
   handleDataUpdate(e) {
     this.tagsFromDb = e.detail;
   }
 
-  updateUserInteraction(newData) {    
+  updateUserInteraction(newData) {
     updateTagHistory(this.tagsFromDb);
   }
 
   findHiddenInputInAncestors(element) {
-      let parent = element.parentElement;
-      while (parent !== null && parent.tagName !== 'BODY') {
-          const inputs = Array.from(parent.children).filter(child => ((child.tagName === 'INPUT') && (child.type === 'hidden')));
-          if (inputs.length > 0) {
-              return inputs[0];
-          }
-          parent = parent.parentElement;
-      }    
-      return null;
+    let parent = element.parentElement;
+    while (parent !== null && parent.tagName !== 'BODY') {
+      const inputs = Array.from(parent.children).filter(child => ((child.tagName === 'INPUT') && (child.type === 'hidden')));
+      if (inputs.length > 0) {
+        return inputs[0];
+      }
+      parent = parent.parentElement;
+    }
+    return null;
   }
 
-  updateDocSelectedTags() {    
+  updateDocSelectedTags() {
     updateLocalSelectedTags(this.selectedTags, this.findHiddenInputInAncestors(this));
   }
 
   disconnectedCallback() {
     window.removeEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
     window.removeEventListener('selectedTagsUpdated', this.handleDataUpdate.bind(this));
+    //window.removeEventListener('resize', this.positionTagList.bind(this));
+    //window.removeEventListener('scroll', this.positionTagList.bind(this));
+    window.removeEventListener('resize', this.boundPositionTagList);
+    window.removeEventListener('scroll', this.boundPositionTagList);
+
   }
 }
 

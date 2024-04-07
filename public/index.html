@@ -198,7 +198,6 @@
 
         function updateLocalSelectedTags(selectedTags, dataEl) {
             if (selectedTags && selectedTags.length > 0) {
-                console.log('event selectedTagsUpdated:' + selectedTags)
                 dataEl.value = selectedTags.join(',');
                 const event = new CustomEvent('selectedTagsUpdated', { detail: selectedTags });
                 window.dispatchEvent(event);
