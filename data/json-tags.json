@@ -39,34 +39,36 @@
     "Photorealism",
     "Concept art",
     "Pixel art",
-    "glossy lips"
+    "glossy lips",
+    "fashion model",
+    "beauty portrait",
+    "glamour"
   ],
   "sourceDir": [
-    "D:\\temp\\source",
-    "D:\\temp\\source2",
-    "D:\\temp\\source3",
-    "D:\\temp\\source4",
-    "D:\\temp\\source5",
-    "D:\\temp\\source6"
+    "D:\\temp\\source"
   ],
   "searchText": [
-    "AslihanGurbuz01",
-    "SerayKaya01",
-    "SelinKara01"    
+    "muge anli"
   ],
   "targetDir": [
-    "D:\\temp\\target",
+    "D:\\temp\\target1",
     "D:\\temp\\target2",
-    "D:\\temp\\target3"
+    "D:\\temp\\target3",    
+    "D:\\temp\\target4",
+    "D:\\temp\\target5",
+    "D:\\temp\\target6",
+    "D:\\temp\\target7"
   ],
   "secondarySearchText": [
-    "nude girl",
-    "glossy lips",
-    "perfect body"
+    "mirror",
+    "reflection",
+    "shadow",
+    "silhouette",
+    "glow"
   ],
   "subTargetDir": [
-    "B",
-    "glossylips",
-    "figure"    
+    "mirror1",
+    "mirror2",
+    "mirror3"
   ]
 }

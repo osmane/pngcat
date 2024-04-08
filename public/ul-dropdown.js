@@ -2,31 +2,111 @@ function initializeUlDropdown() {
     const inputs = document.querySelectorAll('.wrap-inner input.sd-auto-1 ');
     const dropdown = document.querySelector('.dropdown-menu');
     let activeInput = null;
-
+    let dataSource = null;
+    let dataSourceArr = [];
+    var boundHandleDropDownClick = handleDropDownClick.bind(dropdown);
+    
     inputs.forEach(input => {
-        input.addEventListener('click', function (event) {
-            event.stopPropagation();
-            activeInput = this;
-            positionDropdown();
-        });
+        var boundHandleInputClick = handleInputClick.bind(input);        
+        var boundHandleInputBlur = handleInputBlur.bind(input);
+
+        input.removeEventListener('click', boundHandleInputClick);
+        input.addEventListener('click', boundHandleInputClick);
+
+        input.removeEventListener('blur', boundHandleInputBlur);
+        input.addEventListener('blur', boundHandleInputBlur);
+
     });
 
-    dropdown.addEventListener('click', function (event) {
-        event.stopPropagation();
-        if (event.target.tagName === 'LI') {
-            activeInput.value = event.target.textContent;
-            dropdown.style.display = 'none';
-            activeInput = null; // Aktif input'u sıfırla
-        }
-    });
+    dropdown.removeEventListener('click', boundHandleDropDownClick);
+    dropdown.addEventListener('click', boundHandleDropDownClick);
 
     document.body.addEventListener('click', function () {
         dropdown.style.display = 'none';
         activeInput = null; // Aktif input'u sıfırla
     });
 
-    window.addEventListener('resize', positionDropdown);
-    window.addEventListener('scroll', positionDropdown, true);
+    window.addEventListener('resize', positionDropdown, { capture: false, passive: true });    
+    window.addEventListener('scroll', positionDropdown, { capture: false, passive: true });
+
+
+
+    function handleInputBlur(event) {
+        event.stopPropagation();
+        dataSource = document.getElementsByName(this.id + 'Data')[0];
+        dataSourceArr = dataSource.value.split(',');
+
+        if (!!this.value && (this.value.length > 0) && !dataSourceArr.includes(this.value)){            
+            dataSourceArr.push(this.value);
+            dataSourceArr = [...new Set(dataSourceArr)];
+            dataSource.value = dataSourceArr.join(',');
+        }
+    }
+
+    function handleInputClick(event) {        
+        event.stopPropagation();
+        activeInput = this;
+        dropdown.innerHTML = '';
+        
+        dataSource = document.getElementsByName(activeInput.id + 'Data')[0];
+        dataSourceArr = dataSource.value.split(',');
+
+        if (!!activeInput && document.getElementsByName(activeInput.id + 'Data') !== null) {
+            document.getElementsByName(activeInput.id + 'Data')[0].value.split(',').forEach(option => {
+                const li = document.createElement('li');
+                const span = document.createElement('span');
+                span.className = 'dd-text-content';
+                span.textContent = option;
+                li.appendChild(span);
+    
+                const deleteSpan = document.createElement('span');
+                deleteSpan.textContent = 'x';
+                deleteSpan.className = 'delete-btn';
+    
+                const deleteSpanInner = document.createElement('span');
+                deleteSpanInner.className = 'delete-btn-inner';
+                deleteSpan.appendChild(deleteSpanInner);
+    
+                let dataSource = document.getElementsByName(activeInput.id + 'Data')[0];
+                let dataSourceArr = dataSource.value.split(',');
+    
+                deleteSpan.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    const index = dataSourceArr.indexOf(option);
+                    if (index > -1) {
+                        dataSourceArr.splice(index, 1);
+                    }
+                    dataSource.value = dataSourceArr.join(',');
+                    li.remove();
+                });
+    
+                li.appendChild(deleteSpan);
+                dropdown.appendChild(li);
+            });
+        }
+        console.log('input click event fired');
+
+        dropdown.removeEventListener('show', disableScroll);
+        dropdown.removeEventListener('hide', enableScroll);
+        
+        // Dropdown gösterildiğinde kaydırmayı devre dışı bırak
+        dropdown.addEventListener('show', disableScroll);
+        
+        // Dropdown gizlendiğinde kaydırmayı yeniden etkinleştir
+        dropdown.addEventListener('hide', enableScroll);
+
+        positionDropdown();
+    }
+
+    function handleDropDownClick (event) {
+        event.stopPropagation();
+        if ((event.target.tagName === 'LI') || ((event.target.tagName === 'SPAN') && (event.target.className === 'dd-text-content'))){
+            const li = event.target.tagName === 'LI' ? event.target : event.target.parentElement;
+            activeInput.value = li.querySelector('.dd-text-content').textContent;
+            dropdown.style.display = 'none';            
+            activeInput = null; 
+        }
+    }    
 
     // Dropdown menünün konumunu ve boyutunu ayarlayan fonksiyon
     function positionDropdown() {
@@ -64,13 +144,7 @@ function initializeUlDropdown() {
 
     function enableScroll() {
         document.body.style.overflow = ''; // Sayfa kaydırmasını yeniden etkinleştir
-    }
-    
-    // Dropdown gösterildiğinde kaydırmayı devre dışı bırak
-    dropdown.addEventListener('show', disableScroll);
-    
-    // Dropdown gizlendiğinde kaydırmayı yeniden etkinleştir
-    dropdown.addEventListener('hide', enableScroll);
+    }    
 
     // Dropdown menünün yüksekliğini ayarlayan fonksiyon
     function adjustDropdownHeight() {

@@ -226,9 +226,6 @@ class TagList extends HTMLElement {
         preTagTopContainer.style.top = `${rect.bottom + window.scrollY}px`;
       }
 
-      console.log('spaceBelow: ' + spaceBelow + ' containerHeight: ' + containerHeight +
-        ' spaceAbove: ' + spaceAbove + ' rect.top ' + rect.top + ' rect.bottom: ' + rect.bottom)
-
       preTagTopContainer.style.left = `${rect.left + window.scrollX - 13}px`;
       preTagTopContainer.style.width = `${rect.width + 24}px`;
 

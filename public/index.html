@@ -9,7 +9,7 @@
     <script src="ul-dropdown.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        
+
     </style>
 </head>
 
@@ -21,7 +21,7 @@
     <input type="hidden" id="jsonSearchText" name="searchTextData" value="PLACEHOLDER">
     <input type="hidden" id="jsonTargetDir" name="targetDirData" value="PLACEHOLDER">
     <input type="hidden" id="jsonSubTargetDir" name="subTargetDirData" value="PLACEHOLDER">
-
+    <input type="hidden" id="jsonSearchText" name="secondarySearchTextData" value="PLACEHOLDER">
     <!-- <select id="sourceDirDropdown" style="display:none"></select> -->
     <ul id="sourceDirList" style="display:none"></ul>
     <select id="searchTextDropdown" style="display:none"></select>
@@ -29,16 +29,17 @@
     <select id="subTargetDirDropdown" style="display:none"></select>
 
     <div id="main-props">
-        <span>Source Folder Path</span>        
+        <span>Source Folder Path</span>
         <div class="wrap-inner sd-auto-1">
-                <input class="border-none sd-auto-1" id="sourceDir" autocomplete="off" type="text" name="sourceDir">
-                <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-                    <path d="M5 8l4 4 4-4z"></path>
-                </svg>
+            <input class="border-none sd-auto-1" id="sourceDir" autocomplete="off" type="text" name="sourceDir">
+            <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 18 18">
+                <path d="M5 8l4 4 4-4z"></path>
+            </svg>
         </div>
     </div>
-    
-    <div>        
+
+    <div>
     </div>
 
     <div id="searchAreaContainer">
@@ -63,7 +64,7 @@
         (async function () {
             await fetchData();
             addNewSearch();
-            initializeUlDropdown(); 
+            // initializeUlDropdown();
         })();
 
         var lastSearchAreaId = parseInt(document.getElementById('lastSearchAreaId').value, 10);
@@ -76,12 +77,13 @@
                 document.getElementsByName('sourceDirData')[0].value = data.sourceDir.join(',');
                 document.getElementsByName('searchTextData')[0].value = data.searchText.join(',');
                 document.getElementsByName('targetDirData')[0].value = data.targetDir.join(',');
-                document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');                
+                document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');
+                document.getElementsByName('secondarySearchTextData')[0].value = data.secondarySearchText.join(',');
                 console.log('Data: ', data);
             } catch (error) {
                 console.error('Error:', error);
             }
-        }        
+        }
 
         function addNewSearch() {
             const container = document.getElementById('searchAreaContainer');
@@ -161,18 +163,20 @@
             });
 
             updateRemoveButtonsVisibility();
-            
+
             lastSearchAreaId++;
 
             document.getElementById('lastSearchAreaId').value = lastSearchAreaId;
 
+            initializeUlDropdown()
+
             // document.dispatchEvent(new CustomEvent('searchAreaLoaded'));
         }
-        
+
         function loadDynamicComponent(searchAreaId, container, order) {
-            const idName = 'tagList-' + searchAreaId + '-order-' + order  ;            
-            const className= container.classList.contains('secondary-tag-container') ? "tag-list-class secondary-tag-list" : "tag-list-class primary-tag-list";
-            const subject = container.classList.contains('secondary-tag-container') ? "Secondary Tags:" : "Primary Tags:";            
+            const idName = 'tagList-' + searchAreaId + '-order-' + order;
+            const className = container.classList.contains('secondary-tag-container') ? "tag-list-class secondary-tag-list" : "tag-list-class primary-tag-list";
+            const subject = container.classList.contains('secondary-tag-container') ? "Secondary Tags:" : "Primary Tags:";
             const taglistHTML = `
                             <div>
                                 <span>${subject}</span>    
@@ -229,7 +233,7 @@
             const searchParams = collectSearchParams();
             const jsonObj = {};
             const jsonTagValues = document.getElementsByName('sharedTagData')[0].value;
-            jsonObj["tags"] = jsonTagValues ? jsonTagValues.split(',') : [];            
+            jsonObj["tags"] = jsonTagValues ? jsonTagValues.split(',') : [];
             const jsonData = jsonTagValues ? jsonObj : null;
 
             fetch('/process-files', {
@@ -239,13 +243,43 @@
                 },
                 body: JSON.stringify({ sourceDir, searchParams, jsonData }),
             })
-                .then(response => response.json())
-                .then(data => {
-                    displayResults(data.results);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data.results);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+            let uniqueSourceDirs = [];
+            let uniqueSearchTexts = [];
+            let uniqueTargetDirs = [];
+            let uniqueSecondarySearchTexts = [];
+            let uniqueSubTargetDirs = [];
+            uniqueSourceDirs.push(sourceDir)
+            uniqueSearchTexts.push(searchText)
+            uniqueTargetDirs.push(targetDir)
+            uniqueSecondarySearchTexts = uniqueSecondarySearchTexts.concat(secondarySearchTexts)
+            uniqueSubTargetDirs = uniqueSubTargetDirs.concat(subTargetDirs)
+
+            try {
+                const response = fetch('/get-data');
+                const data = response.json();
+                document.getElementsByName('sharedData')[0].value = data.tags.join(',');
+                uniqueSourceDirs = uniqueSourceDirs.concat(data.sourceDir.join(','))
+                uniqueSearchTexts = uniqueSearchTexts.concat(data.searchText.join(','))
+                uniqueTargetDirs = uniqueTargetDirs.concat(data.targetDir.join(','))
+                uniqueSecondarySearchTexts = uniqueSecondarySearchTexts.concat(data.secondarySearchTexts.join(','))
+                uniqueSubTargetDirs = uniqueSubTargetDirs.concat(data.subTargetDirs.join(','))
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            uniqueSourceDirs = [...new Set(uniqueSourceDirs)]
+            uniqueSearchTexts = [...new Set(uniqueSearchTexts)]
+            uniqueTargetDirs = [...new Set(uniqueTargetDirs)]
+            uniqueSecondarySearchTexts = [...new Set(uniqueSecondarySearchTexts)]
+            uniqueSubTargetDirs = [...new Set(uniqueSubTargetDirs)]
         }
 
         function collectSearchParams() {
@@ -273,7 +307,7 @@
                 }));
 
                 // Collect file tags
-                const primaryCustomTags = area.querySelector('[name="primaryCustomTags"]').value;                                    
+                const primaryCustomTags = area.querySelector('[name="primaryCustomTags"]').value;
                 console.log('index html primaryCustomTags:' + primaryCustomTags + ' secondaryCustomTags:' + secondaryCustomTagArr.join(','))
 
                 return {
@@ -353,7 +387,7 @@
                     </div>
                 </div>
             `;
-            
+
 
             container.appendChild(newSecondary);
             lastSecondaryCriteriaId = parseInt(document.getElementById('lastSecondaryCriteriaId').value, 10);
@@ -365,7 +399,7 @@
             loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order)
         }
 
-        function removeThisSecondary(event) {            
+        function removeThisSecondary(event) {
             const secondaryToBeRemoved = event.target.closest('.secondary').closest('div');
             secondaryToBeRemoved.parentNode.remove(secondaryToBeRemoved);
         }
@@ -438,8 +472,8 @@
 
 
 
-    </script>    
-    
+    </script>
+
 </body>
 
 </html>

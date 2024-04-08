@@ -194,6 +194,8 @@ input.sd-auto-1 {
     padding: 10px;
     background-color: #ffffff;
     cursor: pointer;
+    display: flex; 
+    justify-content: space-between;
   }
   
   .dropdown-menu li:hover {
