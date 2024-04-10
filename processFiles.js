@@ -112,8 +112,9 @@ function stringToTagstring (text) {
 // Async directory processing function
 async function processDirectory (directory) {
   const files = await fs.promises.readdir(directory)
-  let totalMoved = 0
+  let totalProcessed = 0
   let totalErrors = 0
+  let totalUpdated = 0
   const movedFilesPaths = []
   console.log('processDirectory started...')
   await ep.open()
@@ -141,12 +142,15 @@ async function processDirectory (directory) {
             targetPath = path.join(targetDir, path.basename(filePath))
           }
 
-          if (targetPath) {
+          if (targetDir || (!!targetDir && (targetDir !== filePath))) {
             // Check for filename conflict and generate a new filename
             targetPath = await generateNewFileName(filePath, targetPath)
 
             await fsExtra.move(filePath, targetPath)
+
+            
           } else {
+            totalUpdated++
             targetPath = filePath
           }
 
@@ -169,7 +173,7 @@ async function processDirectory (directory) {
           }
 
           console.log(`File moved to: ${targetPath}`)
-          totalMoved++
+          totalProcessed++
           movedFilesPaths.push(targetPath)
         }
       } catch (error) {
@@ -180,7 +184,7 @@ async function processDirectory (directory) {
   }
   await ep.close()
   // Display process results
-  console.log(`SEND: {"totalMoved":${totalMoved}, "totalErrors":${totalErrors}, "movedFilesPaths":${JSON.stringify(movedFilesPaths)}}`)
+  console.log(`SEND: {"totalProcessed":${totalProcessed}, "totalErrors":${totalErrors}, "movedFilesPaths":${JSON.stringify(movedFilesPaths)}}`)
 }
 
 // Start the directory processing function

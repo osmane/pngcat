@@ -37,6 +37,7 @@ class TagList extends HTMLElement {
 
     realTagDefiner.addEventListener('input', (event) => {
       this.updateAddButton(event.target.value)
+      this.updateUsableTagsDisplay()
     })
 
     realTagDefiner.addEventListener('focus', () => {
@@ -80,6 +81,13 @@ class TagList extends HTMLElement {
         preTagTopContainer.style.display = 'none'
       }
     })
+
+    document.addEventListener('focusin', function(event) {
+      const path = event.composedPath()
+      if (!path.includes(preTagTopContainer) && !path.includes(realTagContainer)) {
+        preTagTopContainer.style.display = 'none'
+      }
+    });
   }
 
 
@@ -149,28 +157,36 @@ class TagList extends HTMLElement {
   }
 
   updateUsableTagsDisplay() {
-    const preTagContainer = this.shadowRoot.getElementById('pre-tag-container')
-    preTagContainer.innerHTML = ''
+    const preTagContainer = this.shadowRoot.getElementById('pre-tag-container');
+    const filterValue = this.shadowRoot.getElementById('real-tag-definer').value.toLowerCase();
+  
+    preTagContainer.innerHTML = ''; // Her çağrıldığında mevcut etiketleri temizle
+    console.log('filter dedanted: ' + filterValue)
     this.usableTags.forEach(tag => {
-      const tagEl = document.createElement('div')
-      tagEl.className = 'pre-tag'
-      if (this._selectedTags.includes(tag)) {
-        tagEl.classList.add('selected-tag')
-      } else {
-        tagEl.classList.remove('selected-tag')
+      if (tag.toLowerCase().includes(filterValue)) { // Filtreleme koşulu
+        const tagEl = document.createElement('div');
+        tagEl.className = 'pre-tag';
+        if (this._selectedTags.includes(tag)) {
+          tagEl.classList.add('selected-tag');
+        } else {
+          tagEl.classList.remove('selected-tag');
+        }
+  
+        const dataSpan = document.createElement('span');
+        dataSpan.className = 'tag-data';
+        dataSpan.textContent = tag; // Eşleşen etiketleri göster
+        tagEl.appendChild(dataSpan);
+  
+        this.addDeleteButton(tagEl); // Silme butonu ekle
+  
+        preTagContainer.appendChild(tagEl); // Eşleşen etiketi pre-tag-container'a ekle
+      }else{
+        console.log('element examinantedsk: ' + tag)
       }
-
-      const dataSpan = document.createElement('span')
-      dataSpan.className = 'tag-data'
-      dataSpan.textContent = tag
-      tagEl.appendChild(dataSpan)
-
-      this.addDeleteButton(tagEl)
-
-      preTagContainer.appendChild(tagEl)
-    })
-    this.positionTagList()
+    });
+    this.positionTagList(); // Etiket listesinin konumunu güncelle
   }
+  
 
   updateSelectedTagsDisplay() {
     const realTagContainer = this.shadowRoot.getElementById('real-tag-container')
@@ -299,8 +315,6 @@ class TagList extends HTMLElement {
   disconnectedCallback() {
     window.removeEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
     window.removeEventListener('selectedTagsUpdated', this.handleDataUpdate.bind(this));
-    //window.removeEventListener('resize', this.positionTagList.bind(this));
-    //window.removeEventListener('scroll', this.positionTagList.bind(this));
     window.removeEventListener('resize', this.boundPositionTagList);
     window.removeEventListener('scroll', this.boundPositionTagList);
 

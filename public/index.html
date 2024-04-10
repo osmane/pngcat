@@ -21,7 +21,7 @@
     <input type="hidden" id="jsonSearchText" name="searchTextData" value="PLACEHOLDER">
     <input type="hidden" id="jsonTargetDir" name="targetDirData" value="PLACEHOLDER">
     <input type="hidden" id="jsonSubTargetDir" name="subTargetDirData" value="PLACEHOLDER">
-    <input type="hidden" id="jsonSearchText" name="secondarySearchTextData" value="PLACEHOLDER">
+    <input type="hidden" id="jsonsecondarySearchText" name="secondarySearchTextData" value="PLACEHOLDER">
     <!-- <select id="sourceDirDropdown" style="display:none"></select> -->
     <ul id="sourceDirList" style="display:none"></ul>
     <select id="searchTextDropdown" style="display:none"></select>
@@ -62,7 +62,13 @@
 
     <script>
         (async function () {
-            await fetchData();
+            const data = await fetchData();
+            document.getElementsByName('sharedTagData')[0].value = data.tags.join(',');
+            document.getElementsByName('sourceDirData')[0].value = data.sourceDir.join(',');
+            document.getElementsByName('searchTextData')[0].value = data.searchText.join(',');
+            document.getElementsByName('targetDirData')[0].value = data.targetDir.join(',');
+            document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');
+            document.getElementsByName('secondarySearchTextData')[0].value = data.secondarySearchText.join(',');
             addNewSearch();
             // initializeUlDropdown();
         })();
@@ -73,13 +79,8 @@
             try {
                 const response = await fetch('/get-data');
                 const data = await response.json();
-                document.getElementsByName('sharedTagData')[0].value = data.tags.join(',');
-                document.getElementsByName('sourceDirData')[0].value = data.sourceDir.join(',');
-                document.getElementsByName('searchTextData')[0].value = data.searchText.join(',');
-                document.getElementsByName('targetDirData')[0].value = data.targetDir.join(',');
-                document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');
-                document.getElementsByName('secondarySearchTextData')[0].value = data.secondarySearchText.join(',');
                 console.log('Data: ', data);
+                return data;
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -203,9 +204,20 @@
         function updateLocalSelectedTags(selectedTags, dataEl) {
             if (selectedTags && selectedTags.length > 0) {
                 dataEl.value = selectedTags.join(',');
-                const event = new CustomEvent('selectedTagsUpdated', { detail: selectedTags });
-                window.dispatchEvent(event);
+                dataEl.closest('.flex-item').querySelector('.wrap-inner').style.borderColor = '';
+                var mandaRelatedInput;
+                if (dataEl.name === 'primaryCustomTags') {
+                    mandaRelatedInput = dataEl.closest('.flex-container').querySelector('#targetDir')
+                } else {
+                    mandaRelatedInput = dataEl.closest('.flex-container').querySelector('#subTargetDir');
+                }
+                mandaRelatedInput.closest('.wrap-inner').style.borderColor = '';
+            } else {
+                dataEl.value = '';
             }
+
+            const event = new CustomEvent('selectedTagsUpdated', { detail: selectedTags });
+            window.dispatchEvent(event);
         }
 
         function arraysEqual(a, b) {
@@ -228,12 +240,81 @@
             });
         }
 
+        function hasRequiredField(sourceDir) {
+            var searchAreas = document.querySelectorAll('[id^="searchArea-"]');
+            var allFieldsValid = true;
+            
+            if (!sourceDir.value || (sourceDir.value.trim() === '')) {
+                sourceDir.closest('.wrap-inner').style.borderColor = 'red';
+                mandatoryFieldsFilled = false;
+                allFieldsValid = false;
+            } 
+                searchAreas.forEach(function (searchArea) {
+                    var mandatoryFieldsFilled = true;
+
+                    var inputs = searchArea.querySelectorAll('input[type="text"]');
+
+                    var primaryCustomTags = searchArea.querySelector('input[name="primaryCustomTags"]');
+                    var primaryTagListWrap = searchArea.querySelector('.primary-tag-list').closest('.wrap-inner');
+                    var targetDir = searchArea.querySelector('input[name="targetDir"]');
+
+                    inputs.forEach(function (input) {
+                        if ((input.name === 'sourceDir') || (input.name === 'searchText') || input.name.includes('secondarySearchText')) {
+                            if (!input.value || (input.value.trim() === '')) {
+                                input.closest('.wrap-inner').style.borderColor = 'red';
+                                mandatoryFieldsFilled = false;
+                                allFieldsValid = false;
+                            }
+                        }
+                    });
+
+                    if ((!primaryCustomTags || !primaryCustomTags.value || primaryCustomTags.value.trim() === '') &&
+                        (!targetDir.value || targetDir.value.trim() === '')) {
+                        targetDir.closest('.wrap-inner').style.borderColor = 'red';
+                        primaryTagListWrap.style.borderColor = 'red';
+                        mandatoryFieldsFilled = false;
+                        allFieldsValid = false;
+                    }
+
+                    if (searchArea.querySelector('.secondariesContainer div')) {
+                        var secondaries = document.querySelectorAll('.secondariesContainer div.secondary');
+                        secondaries.forEach(function (secondary) {
+                            var secondaryCustomTags = secondary.querySelector('input[name="secondaryCustomTags[]"]');
+                            var subTargetDir = secondary.querySelector('input[name="subTargetDir[]"]');
+                            var secondaryTagListWrap = secondary.querySelector('.secondary-tag-list').closest('.wrap-inner');
+
+                            if ((!secondaryCustomTags || !secondaryCustomTags.value || secondaryCustomTags.value.trim() === '') &&
+                                (!subTargetDir.value || subTargetDir.value.trim() === '')) {
+                                subTargetDir.closest('.wrap-inner').style.borderColor = 'red';
+                                secondaryTagListWrap.style.borderColor = 'red';
+                                mandatoryFieldsFilled = false;
+                                allFieldsValid = false;
+                            }
+                        });                        
+                    }
+                });
+            
+
+            if (!allFieldsValid) {
+                console.log('Please fill in all required fields!');
+            }
+
+            return allFieldsValid;
+        }
+
         function startProcessing() {
-            const sourceDir = document.getElementById('sourceDir').value;
+            var sourceDirInput = document.body.querySelectorAll('input[name="sourceDir"]')[0];
+            const sourceDir = sourceDirInput.value;
+
+            if (!hasRequiredField(sourceDirInput)) {
+                return false;
+            }
+
             const searchParams = collectSearchParams();
             const jsonObj = {};
             const jsonTagValues = document.getElementsByName('sharedTagData')[0].value;
             jsonObj["tags"] = jsonTagValues ? jsonTagValues.split(',') : [];
+            jsonObj["tags"] = jsonObj["tags"].sort();
             const jsonData = jsonTagValues ? jsonObj : null;
 
             fetch('/process-files', {
@@ -243,43 +324,60 @@
                 },
                 body: JSON.stringify({ sourceDir, searchParams, jsonData }),
             })
-            .then(response => response.json())
-            .then(data => {
-                displayResults(data.results);
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data.results);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+            
+            const valueSearchText = document.getElementById('jsonSearchText').value;
+            const valueTargetDir = document.getElementById('jsonTargetDir').value;
+            const valueSubTargetDir = document.getElementById('jsonSubTargetDir').value;
+            const valuesecondarySearchText = document.getElementById('jsonsecondarySearchText').value;
+
+            jsonObj.sourceDir = sourceDir ? sourceDir.split(',') : [];
+            jsonObj.searchText = valueSearchText ? valueSearchText.split(',') : [];
+            jsonObj.targetDir = valueTargetDir ? valueTargetDir.split(',') : [];
+            jsonObj.subTargetDir = valueSubTargetDir ? valueSubTargetDir.split(',') : [];
+            jsonObj.secondarySearchText = valuesecondarySearchText ? valuesecondarySearchText.split(',') : [];
+
+            let jsonFileData = fetchData();
+            // boş eleman kontrolü buraya gelinmeden yapılmalı
+            jsonFileData.tags = Array.from(new Set(jsonObj.tags.concat(jsonFileData.tags)))
+                .filter(item => !!item).sort();
+
+            jsonFileData.sourceDir = Array.from(new Set(jsonObj.sourceDir.concat(jsonFileData.sourceDir)))
+                .filter(item => !!item).sort();
+
+            jsonFileData.searchText = Array.from(new Set(jsonObj.searchText.concat(jsonFileData.searchText)))
+                .filter(item => !!item).sort();
+
+            jsonFileData.targetDir = Array.from(new Set(jsonObj.targetDir.concat(jsonFileData.targetDir)))
+                .filter(item => !!item).sort();
+
+            jsonFileData.subTargetDir = Array.from(new Set(jsonObj.subTargetDir.concat(jsonFileData.subTargetDir)))
+                .filter(item => !!item).sort();
+
+            jsonFileData.secondarySearchText = Array.from(new Set(jsonObj.secondarySearchText.concat(jsonFileData.secondarySearchText)))
+                .filter(item => !!item).sort();
+
+            fetch('/save-lists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonFileData),
             })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-
-            let uniqueSourceDirs = [];
-            let uniqueSearchTexts = [];
-            let uniqueTargetDirs = [];
-            let uniqueSecondarySearchTexts = [];
-            let uniqueSubTargetDirs = [];
-            uniqueSourceDirs.push(sourceDir)
-            uniqueSearchTexts.push(searchText)
-            uniqueTargetDirs.push(targetDir)
-            uniqueSecondarySearchTexts = uniqueSecondarySearchTexts.concat(secondarySearchTexts)
-            uniqueSubTargetDirs = uniqueSubTargetDirs.concat(subTargetDirs)
-
-            try {
-                const response = fetch('/get-data');
-                const data = response.json();
-                document.getElementsByName('sharedData')[0].value = data.tags.join(',');
-                uniqueSourceDirs = uniqueSourceDirs.concat(data.sourceDir.join(','))
-                uniqueSearchTexts = uniqueSearchTexts.concat(data.searchText.join(','))
-                uniqueTargetDirs = uniqueTargetDirs.concat(data.targetDir.join(','))
-                uniqueSecondarySearchTexts = uniqueSecondarySearchTexts.concat(data.secondarySearchTexts.join(','))
-                uniqueSubTargetDirs = uniqueSubTargetDirs.concat(data.subTargetDirs.join(','))
-            } catch (error) {
-                console.error('Error:', error);
-            }
-
-            uniqueSourceDirs = [...new Set(uniqueSourceDirs)]
-            uniqueSearchTexts = [...new Set(uniqueSearchTexts)]
-            uniqueTargetDirs = [...new Set(uniqueTargetDirs)]
-            uniqueSecondarySearchTexts = [...new Set(uniqueSecondarySearchTexts)]
-            uniqueSubTargetDirs = [...new Set(uniqueSubTargetDirs)]
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Data:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
 
         function collectSearchParams() {
@@ -334,7 +432,7 @@
                     }).join('');
 
                     resultElement.innerHTML = `
-                        <a href="#" onclick="toggleDetails(this)">Total Moved Files: ${result.totalMoved}</a>
+                        <a href="#" onclick="toggleDetails(this)">Total Processed Files: ${result.totalProcessed}</a>
                         <ul id="fileList-${result.id}" style="display: none;">${fileListHtml}</ul>
                     `;
                 }
@@ -396,7 +494,9 @@
 
             parentSearchAreaId = container.closest('.search-area').id;
             order = lastSecondaryCriteriaId;
-            loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order)
+            loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order);
+
+            initializeUlDropdown();
         }
 
         function removeThisSecondary(event) {

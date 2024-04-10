@@ -45,7 +45,7 @@ app.post('/process-files', (req, res) => {
                 console.log('the SEND line is:', line)
                 results.push({
                   id,
-                  totalMoved: result.totalMoved,
+                  totalProcessed: result.totalProcessed,
                   totalErrors: result.totalErrors,
                   movedFiles: result.movedFilesPaths.map(filePath => {
                     const fileId = generateSecureId()
@@ -82,24 +82,7 @@ app.post('/process-files', (req, res) => {
         // Add results even in case of any error
         results.push({ id, error: 'File processing error.' })
       })      
-    }
-
-     jsonStr = JSON.stringify(jsonData)
-     console.log('jsonData: ' + jsonStr)
-    if (!!jsonData && jsonData.tags.length > 0) {
-      jsonfile.writeFile('./data/json-tags.json', jsonData, { spaces: 2 })
-        .then(() => {
-          // console.log('JSON başarıyla kaydedildi.');
-          results.push({ jsonDataSaved: 'JSON başarıyla kaydedildi.' });
-        })
-        .catch(err => {
-          console.error('json-tags.json kaydedilemedi:', err);
-          results.push({ jsonDataError: 'json-tags.json kaydedilemedi.' });
-        });
-    }else{
-      console.error('jsonData empty or tags empty.');
-      results.push({ jsonDataError: 'jsonData empty or tags empty.' });
-    }
+    }    
     // Send the obtained results to the client after all processes are completed
     res.json({ results })
   }
@@ -137,6 +120,29 @@ app.get('/get-data', (req, res) => {
     res.json(obj);
   });
 
+});
+
+app.post('/save-lists', (req, res) => {
+  const jsonData = req.body
+  const results = []
+  console.log('jsonData: ' + JSON.stringify(jsonData))
+    jsonStr = JSON.stringify(jsonData)
+    console.log('jsonData: ' + jsonStr)
+   if (!!jsonData && jsonData.tags.length > 0) {
+     jsonfile.writeFile('./data/json-tags.json', jsonData, { spaces: 2 })
+       .then(() => {
+         // console.log('JSON başarıyla kaydedildi.');
+         results.push({ jsonDataSaved: 'JSON başarıyla kaydedildi.' });
+       })
+       .catch(err => {
+         console.error('json-tags.json kaydedilemedi:', err);
+         results.push({ jsonDataError: 'json-tags.json kaydedilemedi.' });
+       });
+   }else{
+     console.error('jsonData empty or tags empty.');
+     results.push({ jsonDataError: 'jsonData empty or tags empty.' });
+   }
+  res.json({ results })
 });
 
 app.listen(port, () => {
