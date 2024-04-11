@@ -31,7 +31,7 @@
     <div id="main-props">
         <span>Source Folder Path</span>
         <div class="wrap-inner sd-auto-1">
-            <input class="border-none sd-auto-1" id="sourceDir" autocomplete="off" type="text" name="sourceDir">
+            <input class="border-none sd-auto-1 dd-guide" id="sourceDir" autocomplete="off" type="text" name="sourceDir">
             <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                 viewBox="0 0 18 18">
                 <path d="M5 8l4 4 4-4z"></path>
@@ -70,7 +70,6 @@
             document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');
             document.getElementsByName('secondarySearchTextData')[0].value = data.secondarySearchText.join(',');
             addNewSearch();
-            // initializeUlDropdown();
         })();
 
         var lastSearchAreaId = parseInt(document.getElementById('lastSearchAreaId').value, 10);
@@ -100,7 +99,7 @@
                             <div>
                                 <span>Text to Search</span>    
                                 <div class="wrap-inner sd-auto-1">
-                                        <input class="border-none sd-auto-1" id="searchText" autocomplete="off" type="text" name="searchText">
+                                        <input class="border-none sd-auto-1 dd-guide" id="searchText" autocomplete="off" type="text" name="searchText">
                                         <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                             <path d="M5 8l4 4 4-4z"></path>
                                         </svg>
@@ -113,7 +112,7 @@
                             <div>
                                 <span>Target Folder</span>    
                                 <div class="wrap-inner sd-auto-1">
-                                        <input class="border-none sd-auto-1" id="targetDir" autocomplete="off" type="text" name="targetDir">
+                                        <input class="border-none sd-auto-1 dd-guide" id="targetDir" autocomplete="off" type="text" name="targetDir">
                                         <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                             <path d="M5 8l4 4 4-4z"></path>
                                         </svg>
@@ -169,9 +168,10 @@
 
             document.getElementById('lastSearchAreaId').value = lastSearchAreaId;
 
-            initializeUlDropdown()
+            initializeUlDropdown();
+            
+            // addClickEventListenerToWrappers (newSearchArea);
 
-            // document.dispatchEvent(new CustomEvent('searchAreaLoaded'));
         }
 
         function loadDynamicComponent(searchAreaId, container, order) {
@@ -452,7 +452,7 @@
                         <div>
                             <span>Secondary Text to Search</span>    
                             <div class="wrap-inner sd-auto-1">
-                                    <input class="border-none sd-auto-1" id="secondarySearchText" autocomplete="off" type="text" name="secondarySearchText[]">
+                                    <input class="border-none sd-auto-1 dd-guide" id="secondarySearchText" autocomplete="off" type="text" name="secondarySearchText[]">
                                     <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                         <path d="M5 8l4 4 4-4z"></path>
                                     </svg>
@@ -468,7 +468,7 @@
                         <div>
                             <span>Sub-Target Folder</span>    
                             <div class="wrap-inner sd-auto-1">
-                                    <input class="border-none sd-auto-1" id="subTargetDir" autocomplete="off" type="text" name="subTargetDir[]">
+                                    <input class="border-none sd-auto-1 dd-guide" id="subTargetDir" autocomplete="off" type="text" name="subTargetDir[]">
                                     <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                         <path d="M5 8l4 4 4-4z"></path>
                                     </svg>
@@ -497,6 +497,8 @@
             loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order);
 
             initializeUlDropdown();
+
+            // addClickEventListenerToWrappers (newSecondary);
         }
 
         function removeThisSecondary(event) {
@@ -568,10 +570,8 @@
                 iframe.style.width = '100%'; // Set iframe width to match modal-content
                 iframe.style.height = '100%'; // Set iframe height to match modal-content
             }
-        }, false);
-
-
-
+        }, false);        
+        
     </script>
 
 </body>

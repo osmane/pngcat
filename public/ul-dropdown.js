@@ -4,6 +4,10 @@ function initializeUlDropdown() {
     let activeInput = null;
     let dataSource = null;
     let dataSourceArr = [];
+    const wrapInnerDivs = document.querySelectorAll('div.wrap-inner');    
+    const filteredDivs = Array.from(wrapInnerDivs).filter(div => {        
+        return Array.from(div.children).some(child => child.classList.contains('dd-guide'));
+    });
 
     inputs.forEach(input => {
         if (!input.eventListeners) {
@@ -34,10 +38,41 @@ function initializeUlDropdown() {
 
     });
 
-    document.body.addEventListener('click', function () {
-        dropdown.style.display = 'none';
-        activeInput = null;
+    filteredDivs.forEach(wrapper => {
+        if (!wrapper.eventListeners) {
+            wrapper.eventListeners = {
+                click: null,
+            };
+        }
+
+        if (wrapper.eventListeners.click) {
+            wrapper.removeEventListener('click', wrapper.eventListeners.click);
+        }
+        wrapper.eventListeners.click = handleWrapperClick.bind(wrapper);
+        wrapper.addEventListener('click', wrapper.eventListeners.click);
     });
+
+    document.body.addEventListener('click', function (e) {        
+        if (activeInput) {
+            console.log('body click event fired in: ' + e.target.name + ' the dropdown display is: ' + dropdown.style.display + ' la olum adamı hasta etme be!');            
+            if (!activeInput.parentNode.classList.contains('wrap-inner') || !e.target.closest('.wrap-inner')) {
+                dropdown.style.display = 'none';
+                activeInput = null;
+            }
+        } else {            
+            dropdown.style.display = 'none';
+            activeInput = null;
+        }
+    });
+
+    function handleWrapperClick(event){           
+        activeInput = this.querySelector('input');
+        if(activeInput) {                        
+            activeInput.focus();
+            activeInput.click();
+        }
+        event.stopPropagation();
+    }
 
     window.addEventListener('resize', positionDropdown, { capture: false, passive: true });
     window.addEventListener('scroll', positionDropdown, { capture: false, passive: true });
@@ -58,6 +93,8 @@ function initializeUlDropdown() {
         if (filterText.trim().length > 0) {
             removeMandatory(event.target)
         }
+
+        
     }
 
     function removeMandatory(el) {
@@ -87,6 +124,8 @@ function initializeUlDropdown() {
             }
         }
 
+        console.log('input click Blur fired in: ' + event.target.id + ' the dropdown display is: ' );
+
     }
 
     function handleInputClick(event) {
@@ -94,6 +133,7 @@ function initializeUlDropdown() {
         activeInput = this;
 
         if (!!activeInput && document.getElementsByName(activeInput.id + 'Data') !== null) {
+            console.log('the first bariyer passed in: ' + activeInput.id);
 
             dropdown.innerHTML = '';
             dataSource = document.getElementsByName(activeInput.id + 'Data')[0];
@@ -143,9 +183,11 @@ function initializeUlDropdown() {
             // Dropdown gizlendiğinde kaydırmayı yeniden etkinleştir
             dropdown.addEventListener('hide', enableScroll);
 
+            console.log('the second bariyer passed in: ' + activeInput.id);
+
             positionDropdown();
         }
-        console.log('input click event fired');
+        console.log('input click event fired in: ' + activeInput.id + ' the dropdown display is: ' + dropdown.style.display);
     }
 
     function handleDropDownClick(event) {
@@ -188,6 +230,8 @@ function initializeUlDropdown() {
             // Hesaplamalar tamamlandıktan sonra dropdown'u tam olarak görünür hale getir
             dropdown.style.visibility = 'visible';
 
+            console.log('the third bariyer passed in: ' + dropdown.style.visibility + ' ' + dropdown.style.display);
+
             adjustDropdownHeight(); // Yüksekliği ve kaydırma çubuğunu ayarla
         }
     }
@@ -210,6 +254,9 @@ function initializeUlDropdown() {
             dropdown.style.maxHeight = '200px'; // Yeterli boşluk varsa, varsayılan maksimum yüksekliği kullan
         }
         dropdown.style.overflowY = 'auto'; // Her durumda kaydırma çubuğunu etkinleştir
+
+        console.log('the fourth bariyer passed for: ' + dropdown.style.top + ' the left' + dropdown.style.left + 
+        ' the height' + dropdown.style.height + ' the width' + dropdown.style.width+ ' the overflow' + dropdown.style.overflowY + ' the display' + dropdown.style.display);
     }
 
 };

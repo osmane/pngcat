@@ -1,9 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 const fsExtra = require('fs-extra')
-// const exiftool = require('node-exiftool');
-// const ep = new exiftool.ExiftoolProcess();
-
 const exiftool = require('node-exiftool')
 const exiftoolBin = require('dist-exiftool')
 const ep = new exiftool.ExiftoolProcess(exiftoolBin)
@@ -81,7 +78,6 @@ async function processFile (filePath) {
 
         if (loraChecked) {
           const match = mdString.match(loraRegex)
-          //sysTags.push(match ? match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]) : [])
           if (match) {
             sysTags.push(...match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]))
           }
@@ -106,7 +102,7 @@ async function processFile (filePath) {
 }
 
 function stringToTagstring (text) {
-  return text.replace(/[^a-zA-Z0-9,]/g, '_')
+  return text.replace(/[^\p{L}\p{N}, ]/gu, '_');
 }
 
 // Async directory processing function
@@ -159,13 +155,13 @@ async function processDirectory (directory) {
             console.log(`processDirectory,array deduping Keywords: ${customTags}`)
             await ep.writeMetadata(targetPath, {
               "Keywords": '',
-            }, ['overwrite_original'])
+            }, ['overwrite_original','codedcharacterset=utf8'])
               .then(console.log)
               .catch(console.error)
 
             await ep.writeMetadata(targetPath, {
               "Keywords+": customTags,
-            }, ['overwrite_original'])
+            }, ['overwrite_original','codedcharacterset=utf8'])
               .then(console.log)
               .catch(console.error)
           } else {
