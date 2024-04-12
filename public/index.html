@@ -31,7 +31,7 @@
     <div id="main-props">
         <span>Source Folder Path</span>
         <div class="wrap-inner sd-auto-1">
-            <input class="border-none sd-auto-1 dd-guide" id="sourceDir" autocomplete="off" type="text" name="sourceDir">
+            <input class="border-none sd-auto-1 dd-guide" id="sourceDir" autocomplete="off" type="text" title="Specify the folder path where the png files are located" name="sourceDir">
             <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                 viewBox="0 0 18 18">
                 <path d="M5 8l4 4 4-4z"></path>
@@ -46,8 +46,10 @@
         <!-- First search area will be placed here -->
     </div>
 
-    <button onclick="addNewSearch()">Add New Search</button>
-    <button onclick="startProcessing()">Start Processing</button>
+    <button onclick="addNewSearch()" title="You can add new search rules and perform categorization operations in bulk.">Add New Search</button>
+    <button onclick="startProcessing()" title="File moving and tagging operations start with this button. 
+When the process is completed, information is given about which files have been moved/updated. 
+The data entered in the combo boxes and tag-list is saved in a file for recall feature.">Start Processing</button>
     <div id="fileModal" class="modal" style="display: none;">
         <div class="modal-content">
             <iframe id="fileFrame" src="" width="100%" height="600px"></iframe>
@@ -93,13 +95,14 @@
             newSearchArea.innerHTML = `
                 <div class="spawnableSearchArea">
                     <div class="flex-container">
-                        <div class="flex-item">
-                            <!-- Text to Search: 
-                            createSDInputBlock('searchText', 'searchText', 'text', 'off', 'Text to Search', '') -->
+                        <div class="flex-item">                            
                             <div>
-                                <span>Text to Search</span>    
+                                <span>Text to Search (Case Sensitive)</span>    
                                 <div class="wrap-inner sd-auto-1">
-                                        <input class="border-none sd-auto-1 dd-guide" id="searchText" autocomplete="off" type="text" name="searchText">
+                                        <input class="border-none sd-auto-1 dd-guide" id="searchText" autocomplete="off" type="text" name="searchText" 
+                                        title="Enter text to search in png promt. It is case sensitive. but regex style inputs are supported (alpha).
+The text entered here is searched as a block within the PNG promt. 
+If you want to search different texts within the same PNG promt, add a secondary search rule, or make a logical entry that complies with the regular expression rules.">
                                         <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                             <path d="M5 8l4 4 4-4z"></path>
                                         </svg>
@@ -107,12 +110,15 @@
                             </div>
                         </div>
                         <div class="flex-item">
-                            <!-- Target Folder: 
-                            createSDInputBlock('targetDir', 'targetDir', 'text', 'off', 'Target Folder', '') -->
                             <div>
                                 <span>Target Folder</span>    
                                 <div class="wrap-inner sd-auto-1">
-                                        <input class="border-none sd-auto-1 dd-guide" id="targetDir" autocomplete="off" type="text" name="targetDir">
+                                        <input class="border-none sd-auto-1 dd-guide" id="targetDir" autocomplete="off" type="text" name="targetDir" 
+                                        title="If the searched text is found, enter the folder path to which the file will be moved. 
+It is mandatory if no tag entry is made.
+If the folder path is left empty and tags are selected, matching pngs will not be moved anywhere. However, selected tags are added to the matching png.
+Example entry: C:\\StableDiffusion\\Automatic1111\\outputs\\extras-images
+">
                                         <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                             <path d="M5 8l4 4 4-4z"></path>
                                         </svg>
@@ -120,8 +126,24 @@
                             </div>
                         </div>
                         <div class="flex-item primary-tag-container">
-                            <!-- Primary Tags: -->
                             <input type="hidden" name="primaryCustomTags" data-id="${lastSearchAreaId}p">
+                        </div>
+                    </div>
+
+                    <div class="flex-item">
+                        <div class="checkbox-container">
+                            <div class="wrap-inner sd-auto-1">
+                                <div class="checkpointCheckClass">
+                                    <input type="checkbox" id="checkpointCheckId" name="checkpointCheckName" value="addCheckpoints">
+                                    <label for="checkpointCheckId">Add Checkpoint name as tag</label>
+                                </div>
+                            </div>
+                            <div class="wrap-inner sd-auto-1">    
+                                <div class="loraCheckClass">
+                                    <input type="checkbox" id="loraCheckId" name="loraCheckName" value="addLoras">
+                                    <label for="loraCheckId">Add LORA names as tag</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -129,19 +151,16 @@
                         <!-- Secondary search criteria will be placed here -->                        
                     </div>
                     <div>                        
-                        <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;">Add New Secondary Search Criteria</button>
+                        <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;" 
+                        title="You can add multiple secondary search rules. 
+Tags related to each result found will be added to the png file. 
+If more than one secondary search rule matches and a folder path is specified within these rules, 
+only the folder path and tags in the top row will be valid. 
+Therefore, for pngs that will contain common tags, please specify the folder path to be moved as much as possible below." 
+                        >Add New Secondary Search Rule</button>
                         <input type="hidden" id="lastSecondaryCriteriaId" value="0">
                     </div>
-                    <div class="sdTagsContainer" style="display: flex;">
-                        <div class="checkpointCheckClass">
-                            <input type="checkbox" id="checkpointCheckId" name="checkpointCheckName" value="addCheckpoints">
-                            <label for="checkpointCheckId">Add Checkpoint name as tag</label>
-                        </div>
-                        <div class="loraCheckClass">
-                            <input type="checkbox" id="loraCheckId" name="loraCheckName" value="addLoras">
-                            <label for="loraCheckId">Add LORA names as tag</label>
-                        </div>
-                    </div>
+                    
                     <button class="remove-sa-btn" onclick="removeSearchArea(this.closest('.spawnableSearchArea'))" style="margin-top: 5px;">Remove This Search Area</button>
                     <div class="results" id="results-${lastSearchAreaId}">Processing results will appear here.</div>                                    
                 </div>
@@ -177,12 +196,14 @@
         function loadDynamicComponent(searchAreaId, container, order) {
             const idName = 'tagList-' + searchAreaId + '-order-' + order;
             const className = container.classList.contains('secondary-tag-container') ? "tag-list-class secondary-tag-list" : "tag-list-class primary-tag-list";
-            const subject = container.classList.contains('secondary-tag-container') ? "Secondary Tags:" : "Primary Tags:";
+            const subject = container.classList.contains('secondary-tag-container') ? "Secondary Tags" : "Primary Tags";
+            const titleText = 'Select tags to be added to the png file. If the tag is not in the list, you can add it by typing it in the input.'
+            + 'This field is required if the folder path is not entered.';
             const taglistHTML = `
-                            <div>
-                                <span>${subject}</span>    
-                                <div class="wrap-inner sd-auto-1">
-                                    <tag-list class="${className}" id ="${idName}" type="tag-list" name="tag-list">                                         
+                            <div title="${titleText}">
+                                <span title="${titleText}">${subject}</span>    
+                                <div class="wrap-inner sd-auto-1" title="${titleText}">
+                                    <tag-list class="${className}" id ="${idName}" type="tag-list" name="tag-list" title="${titleText}">                                         
                                 </div>
                             </div>
             `
@@ -445,14 +466,11 @@
             newSecondary.innerHTML = `
                 <div style="display: flex;" class="flex-container secondary">
                     <div class="flex-item">
-                        <!-- <label>Secondary Text to Search:</label>
-                        <input type="text" name="secondarySearchText[]">
-                        createSDInputBlock('secondarySearchText[]', 'secondarySearchText', 'text', 'off', 'Secondary Text to Search', '')-->
-
                         <div>
-                            <span>Secondary Text to Search</span>    
+                            <span>Secondary Text to Search (Case Sensitive)</span>    
                             <div class="wrap-inner sd-auto-1">
-                                    <input class="border-none sd-auto-1 dd-guide" id="secondarySearchText" autocomplete="off" type="text" name="secondarySearchText[]">
+                                    <input class="border-none sd-auto-1 dd-guide" id="secondarySearchText" autocomplete="off" type="text" name="secondarySearchText[]"
+                                    title="If the first text is found in the png, enter the other text you want to be searched for." >
                                     <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                         <path d="M5 8l4 4 4-4z"></path>
                                     </svg>
@@ -460,15 +478,18 @@
                         </div>
 
                     </div>
-                    <div class="flex-item">
-                        <!-- <label>Sub-Target Folder:</label>
-                        <input type="text" name="subTargetDir[]">
-                        createSDInputBlock('subTargetDir[]', 'subTargetDir', 'text', 'off', 'Sub-Target Folder', '')  -->
-
+                    <div class="flex-item">                       
                         <div>
                             <span>Sub-Target Folder</span>    
                             <div class="wrap-inner sd-auto-1">
-                                    <input class="border-none sd-auto-1 dd-guide" id="subTargetDir" autocomplete="off" type="text" name="subTargetDir[]">
+                                    <input class="border-none sd-auto-1 dd-guide" id="subTargetDir" autocomplete="off" type="text" name="subTargetDir[]"
+                                    title="If the adjacent text is found in png, enter the sub-folder path to which the file will be moved. 
+It is mandatory if no label entry is made. 
+This folder is a subfolder of the folder associated with the priority search text. 
+If the folder name is not found, it is created. 
+example: FolderName\\OtherFolder
+The full path should not be entered. If more than one of the searched secondary texts is found in a png, 
+the file is moved only to the folder associated with the first text found. Files are not copied, only moved.">
                                     <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                         <path d="M5 8l4 4 4-4z"></path>
                                     </svg>
@@ -481,7 +502,7 @@
                         <input type="hidden" name="secondaryCustomTags[]"  data-id="${lastSearchAreaId}s">
                     </div>
                     <div class="flex-item">
-                        <button onclick="removeThisSecondary(event)" style="margin-top: auto;margin-bottom: auto;" title="Remove This Secondary Search Criteria">Remove</button>
+                        <button onclick="removeThisSecondary(event)" style="margin-top: auto;margin-bottom: auto;" title="Remove This Secondary Search Rule">Remove</button>
                     </div>
                 </div>
             `;
