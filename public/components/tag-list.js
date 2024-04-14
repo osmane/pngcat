@@ -210,9 +210,16 @@ class TagList extends HTMLElement {
       deleteBtn.title = 'Remove from history'
     }
     tagEl.appendChild(deleteBtn)
-    const deleteBtnInner = document.createElement('span')
-    deleteBtnInner.classList.add('delete-btn-inner')
-    deleteBtn.appendChild(deleteBtnInner)
+    
+    var svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgElement.setAttribute("width", "16");
+    svgElement.setAttribute("height", "16");
+    svgElement.setAttribute("viewBox", "0 0 24 24");
+    
+    var pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathElement.setAttribute("d", "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z");                
+    svgElement.appendChild(pathElement);
+    deleteBtn.appendChild(svgElement)
   }
 
   arraysEqual(a, b) {

@@ -413,7 +413,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
                 const secondarySearchTexts = Array.from(area.querySelectorAll('[name="secondarySearchText[]"]')).map(input => input.value);
                 const subTargetDirs = Array.from(area.querySelectorAll('[name="subTargetDir[]"]')).map(input => input.value);
                 const secondaryCustomTagArr = Array.from(area.querySelectorAll('[name="secondaryCustomTags[]"]')).map(input => input.value);
-
+                
                 const checkpointChecked = area.querySelector('[name="checkpointCheckName"]').checked ? 'addCheckpoints' : ''
                 const loraChecked = area.querySelector('[name="loraCheckName"]').checked ? 'addLoras' : ''
 
@@ -424,7 +424,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
                     subTargetDir: subTargetDirs[i] || '',
                     secondaryCustomTags: secondaryCustomTagArr[i] || '', // Send an empty string if there's no secondary tag
                 }));
-
+                console.log('index html secondaries:' + secondaries);
                 // Collect file tags
                 const primaryCustomTags = area.querySelector('[name="primaryCustomTags"]').value;
                 console.log('index html primaryCustomTags:' + primaryCustomTags + ' secondaryCustomTags:' + secondaryCustomTagArr.join(','))

@@ -28,12 +28,14 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    padding: 4px 4px;
+    
+    background: linear-gradient(to top, #f9fafb, white);
+    border: 1px solid #e5e7eb;
+    padding: 1px 4px;
     order: 0;
     border-radius: 3px;
-    font-size: 13px;
+    font-size: 12px;
+    color: black;
 }
 
 .real-tag {
@@ -42,15 +44,12 @@ body {
     gap: 8px;
     padding: 1px 4px;
     font-size: 12px;
-    background-color: #f5a439;
-    border: 1px solid #fed7aa;
-    ;
+    background: linear-gradient(to top, #f9fafb, white);
+    background: linear-gradient(to bottom right, #9da2ad, #c7c7c7);
+    border: 1px solid #ddd;
     border-radius: 3px;
     outline: none;
-    border-color: #fed7aa;
-    border-style: solid;
     order: 0;
-    font-weight: 600;
 }
 
 .pre-tag span,
@@ -91,27 +90,25 @@ body {
 }
 
 .selected-tag {
-    border: 1px solid rgb(65, 107, 65);
-    background: #f5a439;
+    border: 1px solid #ddd;
+    background: linear-gradient(to bottom right, #9da2ad, #c7c7c7);
+    color: black
 }
 
 .delete-btn {
-    content: "";
-    display: inline-block;
-    background-color: transparent;
-    width: 10px;
-    height: 18px;
     cursor: pointer;
+    border: 1px solid #e5e7eb;
+    border-radius: 99px;
+    background-color: white;
+    margin-left: 20px;
+    width: 14px;
+    height: 14px;
+    font-size: 6px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }
 
-.delete-btn-inner {
-    clip-path: polygon(10% 0, 0 10%, 40% 50%, 0 90%, 10% 100%, 50% 60%, 90% 100%, 100% 90%, 60% 50%, 100% 10%, 90% 0, 50% 40%);
-    content: "";
-    display: inline-block;
-    background-color: #d40a0a67;
-    width: 10px;
-    height: 10px;
-}
 .right-margined-title {
     margin-left: auto;
 }

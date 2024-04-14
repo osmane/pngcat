@@ -11,7 +11,7 @@ const [sourceDir, searchText, targetDir, secondarySearchTexts, subTargetDirs, pr
 // Convert multiple secondary search texts and target directories into arrays
 const secondarySearchTextArray = secondarySearchTexts ? secondarySearchTexts.split('|') : []
 const subTargetDirsArray = subTargetDirs ? subTargetDirs.split('|') : []
-const secondaryCustomTagsArray = secondaryCustomTags ? stringToTagstring(secondaryCustomTags).split(',') : []
+const secondaryCustomTagsArray = secondaryCustomTags ? stringToTagstring(secondaryCustomTags).split('|') : []
 
 const primaryRegex = new RegExp(searchText, 'i')
 const loraRegex = /Lora hashes: \\"([^"]+)\\"/
@@ -46,6 +46,7 @@ async function generateNewFileName (originalPath, targetPath) {
 async function processFile (filePath) {
   try {
     console.log('processFile started...')
+    var secondaryKeywords = []
 
     // Read metadata from a PNG file
 
@@ -69,6 +70,10 @@ async function processFile (filePath) {
         secondarySearchTextArray.forEach((text, index) => {
           if (mdString.match(new RegExp(text, 'i'))) {
             secondaryIndex = index
+            secondaryKeywords = secondaryKeywords.concat(secondaryCustomTagsArray[index].split(','))
+            console.log(`Secondary text found: ${text}`)
+          }else{
+            console.log(`Secondary text not found: ${text}`)
           }
         })
 
@@ -94,7 +99,7 @@ async function processFile (filePath) {
       console.log(`processFile, Current mdjson: ${JSON.stringify(mdJson)}`)
     }
 
-    return { found: primaryFound, secondaryIndex, currentKeywords: currentKeywords }
+    return { found: primaryFound, secondaryIndex, currentKeywords: currentKeywords, secondaryKeywords: secondaryKeywords}
   } catch (error) {
     console.error(`Error: ${error}`)
     return { found: false }
@@ -102,7 +107,20 @@ async function processFile (filePath) {
 }
 
 function stringToTagstring (text) {
-  return text.replace(/[^\p{L}\p{N}, ]/gu, '_');
+  //return text.replace(/[^\p{L}\p{N}, ]/gu, '_');
+    return text.replace(/[^\p{L}\p{N}, |]/gu, '_');
+}
+
+function uniqueTitleCaseArray(array) {  
+  const uniqueArray = [...new Set(array.map(element => element.toLowerCase()))];
+  const resultArray = uniqueArray.map(element => {
+    return element
+      .split(' ')  
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))  
+      .join(' '); 
+  });
+
+  return resultArray;
 }
 
 // Async directory processing function
@@ -120,19 +138,16 @@ async function processDirectory (directory) {
     let customTags = []
     if (fileExt === '.png') {
       try {
-        const { found, secondaryIndex, currentKeywords } = await processFile(filePath)
+        const { found, secondaryIndex, currentKeywords, secondaryKeywords } = await processFile(filePath)
         if (found) {
           let targetPath
-          customTags = customTags.concat(primaryCustomTagsArray).concat(currentKeywords).concat(sysTags)
+          customTags = customTags.concat(primaryCustomTagsArray).concat(currentKeywords).concat(sysTags).concat(secondaryKeywords)
 
           if (secondaryIndex >= 0) {
             // If a secondary search text is found, move the file to the corresponding sub-directory
             if (subTargetDirsArray[secondaryIndex] !== '') {
               targetPath = path.join(targetDir, subTargetDirsArray[secondaryIndex], path.basename(filePath))
-            }
-            if (secondaryCustomTagsArray[secondaryIndex]) {
-              customTags = customTags.concat(secondaryCustomTagsArray[secondaryIndex]).concat(currentKeywords)
-            }
+            }            
           } else {
             // If only the primary search text is found, move the file to the primary target directory
             targetPath = path.join(targetDir, path.basename(filePath))
@@ -143,7 +158,6 @@ async function processDirectory (directory) {
             targetPath = await generateNewFileName(filePath, targetPath)
 
             await fsExtra.move(filePath, targetPath)
-
             
           } else {
             totalUpdated++
@@ -151,7 +165,8 @@ async function processDirectory (directory) {
           }
 
           if (customTags.length > 0) {
-            customTags = [...new Set(customTags)]
+            // customTags = [...new Set(customTags)]
+            customTags = uniqueTitleCaseArray(customTags)
             console.log(`processDirectory,array deduping Keywords: ${customTags}`)
             await ep.writeMetadata(targetPath, {
               "Keywords": '',
@@ -159,14 +174,14 @@ async function processDirectory (directory) {
               .then(console.log)
               .catch(console.error)
 
-            await ep.writeMetadata(targetPath, {
+            /*await ep.writeMetadata(targetPath, {
               "Keywords+": customTags,
             }, ['overwrite_original','codedcharacterset=utf8'])
               .then(console.log)
-              .catch(console.error)
-          } else {
-            console.log('processDirectory, not Keywords found...')
-          }
+              .catch(console.error)*/
+            } else {
+              console.log('processDirectory, not Keywords found...')
+            }
 
           console.log(`File moved to: ${targetPath}`)
           totalProcessed++
