@@ -22,8 +22,6 @@
     <input type="hidden" id="jsonTargetDir" name="targetDirData" value="PLACEHOLDER">
     <input type="hidden" id="jsonSubTargetDir" name="subTargetDirData" value="PLACEHOLDER">
     <input type="hidden" id="jsonsecondarySearchText" name="secondarySearchTextData" value="PLACEHOLDER">
-    <!-- <select id="sourceDirDropdown" style="display:none"></select> -->
-    <ul id="sourceDirList" style="display:none"></ul>
     <select id="searchTextDropdown" style="display:none"></select>
     <select id="targetDirDropdown" style="display:none"></select>
     <select id="subTargetDirDropdown" style="display:none"></select>
@@ -57,14 +55,12 @@ The data entered in the combo boxes and tag-list is saved in a file for recall f
         </div>
     </div>
     <ul class="dropdown-menu">
-        <li>Seçenek 1</li>
-        <li>Seçenek 2</li>
-        <li>Seçenek 3</li>
     </ul>
 
     <script>
         (async function () {
             const data = await fetchData();
+            // loading dropdown and taglist items
             document.getElementsByName('sharedTagData')[0].value = data.tags.join(',');
             document.getElementsByName('sourceDirData')[0].value = data.sourceDir.join(',');
             document.getElementsByName('searchTextData')[0].value = data.searchText.join(',');
@@ -101,7 +97,6 @@ The data entered in the combo boxes and tag-list is saved in a file for recall f
                                 <div class="wrap-inner sd-auto-1">
                                         <input class="border-none sd-auto-1 dd-guide" id="searchText" autocomplete="off" type="text" name="searchText" 
                                         title="Enter text to search in png promt. It is case sensitive. but regex style inputs are supported (alpha).
-The text entered here is searched as a block within the PNG promt. 
 If you want to search different texts within the same PNG promt, add a secondary search rule, or make a logical entry that complies with the regular expression rules.">
                                         <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                             <path d="M5 8l4 4 4-4z"></path>
@@ -151,7 +146,7 @@ Example entry: C:\\StableDiffusion\\Automatic1111\\outputs\\extras-images
                         <!-- Secondary search criteria will be placed here -->                        
                     </div>
                     <div>                        
-                        <button onclick="addNewSecondaryCriteria(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;" 
+                        <button onclick="addNewSecondaryRule(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;" 
                         title="You can add multiple secondary search rules. 
 Tags related to each result found will be added to the png file. 
 If more than one secondary search rule matches and a folder path is specified within these rules, 
@@ -171,15 +166,11 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
 
             const primaryContainer = newSearchArea.getElementsByClassName('primary-tag-container')[0];
 
-            loadDynamicComponent(newSearchArea.id, primaryContainer, 0)
+            appendTagList(newSearchArea.id, primaryContainer, 0)
 
             const newSecondariesContainer = newSearchArea.querySelector('.secondariesContainer');
 
-            addNewSecondaryCriteria(newSecondariesContainer);
-
-            document.querySelector('.sd-auto-1').addEventListener('click', () => {
-                sourceDirList.style.display = sourceDirList.style.display === 'none' ? 'block' : 'none';
-            });
+            addNewSecondaryRule(newSecondariesContainer);
 
             updateRemoveButtonsVisibility();
 
@@ -188,12 +179,9 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             document.getElementById('lastSearchAreaId').value = lastSearchAreaId;
 
             initializeUlDropdown();
-            
-            // addClickEventListenerToWrappers (newSearchArea);
-
         }
 
-        function loadDynamicComponent(searchAreaId, container, order) {
+        function appendTagList(searchAreaId, container, order) {
             const idName = 'tagList-' + searchAreaId + '-order-' + order;
             const className = container.classList.contains('secondary-tag-container') ? "tag-list-class secondary-tag-list" : "tag-list-class primary-tag-list";
             const subject = container.classList.contains('secondary-tag-container') ? "Secondary Tags" : "Primary Tags";
@@ -332,11 +320,11 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             }
 
             const searchParams = collectSearchParams();
-            const jsonObj = {};
-            const jsonTagValues = document.getElementsByName('sharedTagData')[0].value;
-            jsonObj["tags"] = jsonTagValues ? jsonTagValues.split(',') : [];
-            jsonObj["tags"] = jsonObj["tags"].sort();
-            const jsonData = jsonTagValues ? jsonObj : null;
+            const dropdownValues = {};
+            const tagHistoryVals = document.getElementsByName('sharedTagData')[0].value;
+            dropdownValues["tags"] = tagHistoryVals ? tagHistoryVals.split(',') : [];
+            dropdownValues["tags"] = dropdownValues["tags"].sort();
+            const jsonData = tagHistoryVals ? dropdownValues : null;
 
             fetch('/process-files', {
                 method: 'POST',
@@ -359,30 +347,30 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             const valueSubTargetDir = document.getElementById('jsonSubTargetDir').value;
             const valuesecondarySearchText = document.getElementById('jsonsecondarySearchText').value;
 
-            jsonObj.sourceDir = sourceDir ? sourceDir.split(',') : [];
-            jsonObj.searchText = valueSearchText ? valueSearchText.split(',') : [];
-            jsonObj.targetDir = valueTargetDir ? valueTargetDir.split(',') : [];
-            jsonObj.subTargetDir = valueSubTargetDir ? valueSubTargetDir.split(',') : [];
-            jsonObj.secondarySearchText = valuesecondarySearchText ? valuesecondarySearchText.split(',') : [];
+            dropdownValues.sourceDir = sourceDir ? sourceDir.split(',') : [];
+            dropdownValues.searchText = valueSearchText ? valueSearchText.split(',') : [];
+            dropdownValues.targetDir = valueTargetDir ? valueTargetDir.split(',') : [];
+            dropdownValues.subTargetDir = valueSubTargetDir ? valueSubTargetDir.split(',') : [];
+            dropdownValues.secondarySearchText = valuesecondarySearchText ? valuesecondarySearchText.split(',') : [];
 
-            let jsonFileData = fetchData();
+            let dropdownFileData = fetchData();
             // boş eleman kontrolü buraya gelinmeden yapılmalı
-            jsonFileData.tags = Array.from(new Set(jsonObj.tags.concat(jsonFileData.tags)))
+            dropdownFileData.tags = Array.from(new Set(dropdownValues.tags.concat(dropdownFileData.tags)))
                 .filter(item => !!item).sort();
 
-            jsonFileData.sourceDir = Array.from(new Set(jsonObj.sourceDir.concat(jsonFileData.sourceDir)))
+            dropdownFileData.sourceDir = Array.from(new Set(dropdownValues.sourceDir.concat(dropdownFileData.sourceDir)))
                 .filter(item => !!item).sort();
 
-            jsonFileData.searchText = Array.from(new Set(jsonObj.searchText.concat(jsonFileData.searchText)))
+            dropdownFileData.searchText = Array.from(new Set(dropdownValues.searchText.concat(dropdownFileData.searchText)))
                 .filter(item => !!item).sort();
 
-            jsonFileData.targetDir = Array.from(new Set(jsonObj.targetDir.concat(jsonFileData.targetDir)))
+            dropdownFileData.targetDir = Array.from(new Set(dropdownValues.targetDir.concat(dropdownFileData.targetDir)))
                 .filter(item => !!item).sort();
 
-            jsonFileData.subTargetDir = Array.from(new Set(jsonObj.subTargetDir.concat(jsonFileData.subTargetDir)))
+            dropdownFileData.subTargetDir = Array.from(new Set(dropdownValues.subTargetDir.concat(dropdownFileData.subTargetDir)))
                 .filter(item => !!item).sort();
 
-            jsonFileData.secondarySearchText = Array.from(new Set(jsonObj.secondarySearchText.concat(jsonFileData.secondarySearchText)))
+            dropdownFileData.secondarySearchText = Array.from(new Set(dropdownValues.secondarySearchText.concat(dropdownFileData.secondarySearchText)))
                 .filter(item => !!item).sort();
 
             fetch('/save-lists', {
@@ -390,7 +378,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(jsonFileData),
+                body: JSON.stringify(dropdownFileData),
             })
                 .then(response => response.json())
                 .then(data => {
@@ -461,7 +449,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             addClickEventToFileLinks();
         }
 
-        function addNewSecondaryCriteria(container) {
+        function addNewSecondaryRule(container) {
             const newSecondary = document.createElement('div');
             newSecondary.innerHTML = `
                 <div style="display: flex;" class="flex-container secondary">
@@ -515,7 +503,7 @@ the file is moved only to the folder associated with the first text found. Files
 
             parentSearchAreaId = container.closest('.search-area').id;
             order = lastSecondaryCriteriaId;
-            loadDynamicComponent(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order);
+            appendTagList(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order);
 
             initializeUlDropdown();
 
