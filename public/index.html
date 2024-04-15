@@ -22,18 +22,72 @@
     <input type="hidden" id="jsonTargetDir" name="targetDirData" value="PLACEHOLDER">
     <input type="hidden" id="jsonSubTargetDir" name="subTargetDirData" value="PLACEHOLDER">
     <input type="hidden" id="jsonsecondarySearchText" name="secondarySearchTextData" value="PLACEHOLDER">
-    <select id="searchTextDropdown" style="display:none"></select>
-    <select id="targetDirDropdown" style="display:none"></select>
-    <select id="subTargetDirDropdown" style="display:none"></select>
+    <input type="hidden" name="presetListData" value="PLACEHOLDER">
 
     <div id="main-props">
-        <span>Source Folder Path</span>
-        <div class="wrap-inner sd-auto-1">
-            <input class="border-none sd-auto-1 dd-guide" id="sourceDir" autocomplete="off" type="text" title="Specify the folder path where the png files are located" name="sourceDir">
-            <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                viewBox="0 0 18 18">
-                <path d="M5 8l4 4 4-4z"></path>
-            </svg>
+        <div class="flex-container">
+            <div class="flex-item">
+                <div>
+                    <span>Source Folder Path</span>
+                    <div class="wrap-inner sd-auto-1">
+                        <input class="border-none sd-auto-1 dd-guide" id="sourceDir" autocomplete="off" type="text"
+                            title="Specify the folder path where the png files are located" name="sourceDir">
+                        <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                            viewBox="0 0 18 18">
+                            <path d="M5 8l4 4 4-4z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-item">
+                <div>
+                    <span>Select or define preset</span>
+                    <div class="wrap-inner sd-auto-1">
+                        <input class="border-none sd-auto-1 dd-guide" id="presetList" name="presetName"
+                            autocomplete="off" type="text"
+                            title="Enter a file name to save the search parameters you have entered for later use, or select a file to reload the parameters you have previously saved.">
+                        <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                            viewBox="0 0 18 18">
+                            <path d="M5 8l4 4 4-4z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-item">
+                <div>
+                    <span>&nbsp;</span>
+                    <div class="wrap-inner sd-auto-1">
+                        <button onclick="savePreset()"
+                            title="Select a file to save your search parameters or enter a new file name and click this button.">Save
+                            Preset</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-item">
+                <div>
+                    <span>&nbsp;</span>
+                    <div class="wrap-inner sd-auto-1">
+                        <button onclick="loadPreset(false)"
+                            title="Use this button to clean current search values and transfer the parameter file content you selected from the drop-down box to the page.">Load
+                            Preset</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-item">
+                <div>
+                    <span>&nbsp;</span>
+                    <div class="wrap-inner sd-auto-1">
+                        <button onclick="loadPreset(true)"
+                            title="Use this button to transfer and merge the parameter file content you selected from the drop-down box to the page.">Merge
+                            Preset</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -44,7 +98,8 @@
         <!-- First search area will be placed here -->
     </div>
 
-    <button onclick="addNewSearch()" title="You can add new search rules and perform categorization operations in bulk.">Add New Search</button>
+    <button onclick="addNewSearch()"
+        title="You can add new search rules and perform categorization operations in bulk.">Add New Search</button>
     <button onclick="startProcessing()" title="File moving and tagging operations start with this button. 
 When the process is completed, information is given about which files have been moved/updated. 
 The data entered in the combo boxes and tag-list is saved in a file for recall feature.">Start Processing</button>
@@ -54,27 +109,27 @@ The data entered in the combo boxes and tag-list is saved in a file for recall f
             <button onclick="closeModal()">Close</button>
         </div>
     </div>
-    <ul class="dropdown-menu">
-    </ul>
+    <ul class="dropdown-menu"></ul>
+
+    <div id="overlay" style="display:none;">
+        Processing, please wait...
+        <div class="spinner"></div>
+    </div>
 
     <script>
         (async function () {
-            const data = await fetchData();
-            // loading dropdown and taglist items
-            document.getElementsByName('sharedTagData')[0].value = data.tags.join(',');
-            document.getElementsByName('sourceDirData')[0].value = data.sourceDir.join(',');
-            document.getElementsByName('searchTextData')[0].value = data.searchText.join(',');
-            document.getElementsByName('targetDirData')[0].value = data.targetDir.join(',');
-            document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');
-            document.getElementsByName('secondarySearchTextData')[0].value = data.secondarySearchText.join(',');
+            const data = await fetchTagHistory();
+            const presetNames = await listPresetNames();
+            fillDropdownSources(data);
+            fillPresetSource(presetNames)
             addNewSearch();
         })();
 
         var lastSearchAreaId = parseInt(document.getElementById('lastSearchAreaId').value, 10);
 
-        async function fetchData() {
+        async function fetchTagHistory() {
             try {
-                const response = await fetch('/get-data');
+                const response = await fetch('/get-tag-history');
                 const data = await response.json();
                 console.log('Data: ', data);
                 return data;
@@ -82,6 +137,117 @@ The data entered in the combo boxes and tag-list is saved in a file for recall f
                 console.error('Error:', error);
             }
         }
+
+        async function listPresetNames() {
+            try {
+                const response = await fetch('/list-presets');
+                const presets = await response.json();
+                console.log('presets: ', presets);
+                return presets;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function fillPresetSource(presetNames) {
+            const presetNamesWithoutExtension = presetNames.map(name =>
+                name.endsWith('.json') ? name.slice(0, -5) : name
+            );
+            document.getElementsByName('presetListData')[0].value = presetNamesWithoutExtension.join(',');
+        }
+
+        function fillDropdownSources(data) {
+            document.getElementsByName('sourceDirData')[0].value = data.sourceDir.join(',');
+            document.getElementsByName('sharedTagData')[0].value = data.tags.join(',');
+            document.getElementsByName('searchTextData')[0].value = data.searchText.join(',');
+            document.getElementsByName('targetDirData')[0].value = data.targetDir.join(',');
+            document.getElementsByName('subTargetDirData')[0].value = data.subTargetDir.join(',');
+            document.getElementsByName('secondarySearchTextData')[0].value = data.secondarySearchText.join(',');
+        }
+
+        async function savePreset() {
+            const presetName = document.querySelector('input[name="presetName"]').value;
+            const searchParams = collectSearchParams();
+            const sourceDir = document.getElementById('sourceDir');
+
+            const presetJson = {
+                "searchParams": searchParams,
+                "sourceDir": sourceDir.value
+            };
+
+            try {
+                const response = await fetch('/save-preset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ presetName, presetJson }),
+                });
+
+                const data = await response.json();
+                console.log('Data:', data);
+
+                // listPresetNames asenkron fonksiyonunun sonucunu bekleyin
+                const presetNames = await listPresetNames();
+                fillPresetSource(presetNames);
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function loadPreset(merge) {
+            const presetName = document.querySelector('input[name="presetName"]').value;
+            const currentParams = merge ? collectSearchParams() : [];
+            lastSearchAreaId = 0;
+            fetch(`/get-preset/${presetName}.json`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Preset Data:', data);
+                    document.getElementById('sourceDir').value = data.sourceDir;
+                    document.querySelectorAll('.search-area').forEach(area => area.remove());
+                    mergedParams = merge ? [...currentParams, ...data.searchParams] : data.searchParams;
+                    mergedParams.forEach(searchParam => {
+                        addNewSearch();
+                        const searchArea = document.getElementById(`searchArea-${lastSearchAreaId - 1}`);
+                        searchArea.querySelector('[name="searchText"]').value = searchParam.searchText;
+                        searchArea.querySelector('[name="targetDir"]').value = searchParam.targetDir;
+
+                        searchArea.querySelector('[name="checkpointCheckName"]').checked = searchParam.checkpointChecked === 'addCheckpoints';
+                        searchArea.querySelector('[name="loraCheckName"]').checked = searchParam.loraChecked === 'addLoras';
+
+                        if (searchParam.primaryCustomTags && searchParam.primaryCustomTags.length > 0) {
+                            const taglistEl = searchArea.querySelector('tag-list.primary-tag-list');
+                            taglistEl.selectedTags = searchParam.primaryCustomTags.split(',');
+                            taglistEl.updateSelectedTagsDisplay();
+                        }
+
+                        searchParam.secondaries.forEach((secondary, index) => {
+                            const secondariesContainer = searchArea.querySelector('.secondariesContainer');
+                            addNewSecondaryRule(secondariesContainer);
+                            const secondaryContainer = searchArea.querySelectorAll('.secondary')[index];
+                            secondaryContainer.querySelector('[name="secondarySearchText[]"]').value = secondary.secondarySearchText;
+                            secondaryContainer.querySelector('[name="subTargetDir[]"]').value = secondary.subTargetDir;
+
+                            if (secondary.secondaryCustomTags && secondary.secondaryCustomTags.length > 0) {
+                                const taglistEl = secondaryContainer.querySelector('tag-list.secondary-tag-list');
+                                taglistEl.selectedTags = secondary.secondaryCustomTags.split(',');
+                                taglistEl.updateSelectedTagsDisplay();
+                            }
+
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+        }
+
 
         function addNewSearch() {
             const container = document.getElementById('searchAreaContainer');
@@ -93,10 +259,10 @@ The data entered in the combo boxes and tag-list is saved in a file for recall f
                     <div class="flex-container">
                         <div class="flex-item">                            
                             <div>
-                                <span>Text to Search (Case Sensitive)</span>    
+                                <span>Text to Search </span>    
                                 <div class="wrap-inner sd-auto-1">
                                         <input class="border-none sd-auto-1 dd-guide" id="searchText" autocomplete="off" type="text" name="searchText" 
-                                        title="Enter text to search in png promt. It is case sensitive. but regex style inputs are supported (alpha).
+                                        title="Enter text to search in png promt. Regex inputs are supported (alpha).
 If you want to search different texts within the same PNG promt, add a secondary search rule, or make a logical entry that complies with the regular expression rules.">
                                         <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                             <path d="M5 8l4 4 4-4z"></path>
@@ -141,10 +307,8 @@ Example entry: C:\\StableDiffusion\\Automatic1111\\outputs\\extras-images
                             </div>
                         </div>
                     </div>
-
-                    <div class="secondariesContainer">
-                        <!-- Secondary search criteria will be placed here -->                        
-                    </div>
+                    <!-- Secondary search criteria will be placed in secondariesContainer -->    
+                    <div class="secondariesContainer"></div>
                     <div>                        
                         <button onclick="addNewSecondaryRule(this.closest('.spawnableSearchArea').querySelector('.secondariesContainer'))" style="margin-top: 5px;" 
                         title="You can add multiple secondary search rules. 
@@ -170,8 +334,6 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
 
             const newSecondariesContainer = newSearchArea.querySelector('.secondariesContainer');
 
-            addNewSecondaryRule(newSecondariesContainer);
-
             updateRemoveButtonsVisibility();
 
             lastSearchAreaId++;
@@ -186,7 +348,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             const className = container.classList.contains('secondary-tag-container') ? "tag-list-class secondary-tag-list" : "tag-list-class primary-tag-list";
             const subject = container.classList.contains('secondary-tag-container') ? "Secondary Tags" : "Primary Tags";
             const titleText = 'Select tags to be added to the png file. If the tag is not in the list, you can add it by typing it in the input.'
-            + 'This field is required if the folder path is not entered.';
+                + 'This field is required if the folder path is not entered.';
             const taglistHTML = `
                             <div title="${titleText}">
                                 <span title="${titleText}">${subject}</span>    
@@ -210,7 +372,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
 
         }
 
-        function updateLocalSelectedTags(selectedTags, dataEl) {
+        function updateLocalSelectedTags(selectedTags, dataEl, taglistEl) {
             if (selectedTags && selectedTags.length > 0) {
                 dataEl.value = selectedTags.join(',');
                 dataEl.closest('.flex-item').querySelector('.wrap-inner').style.borderColor = '';
@@ -252,57 +414,57 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
         function hasRequiredField(sourceDir) {
             var searchAreas = document.querySelectorAll('[id^="searchArea-"]');
             var allFieldsValid = true;
-            
+
             if (!sourceDir.value || (sourceDir.value.trim() === '')) {
                 sourceDir.closest('.wrap-inner').style.borderColor = 'red';
                 mandatoryFieldsFilled = false;
                 allFieldsValid = false;
-            } 
-                searchAreas.forEach(function (searchArea) {
-                    var mandatoryFieldsFilled = true;
+            }
+            searchAreas.forEach(function (searchArea) {
+                var mandatoryFieldsFilled = true;
 
-                    var inputs = searchArea.querySelectorAll('input[type="text"]');
+                var inputs = searchArea.querySelectorAll('input[type="text"]');
 
-                    var primaryCustomTags = searchArea.querySelector('input[name="primaryCustomTags"]');
-                    var primaryTagListWrap = searchArea.querySelector('.primary-tag-list').closest('.wrap-inner');
-                    var targetDir = searchArea.querySelector('input[name="targetDir"]');
+                var primaryCustomTags = searchArea.querySelector('input[name="primaryCustomTags"]');
+                var primaryTagListWrap = searchArea.querySelector('.primary-tag-list').closest('.wrap-inner');
+                var targetDir = searchArea.querySelector('input[name="targetDir"]');
 
-                    inputs.forEach(function (input) {
-                        if ((input.name === 'sourceDir') || (input.name === 'searchText') || input.name.includes('secondarySearchText')) {
-                            if (!input.value || (input.value.trim() === '')) {
-                                input.closest('.wrap-inner').style.borderColor = 'red';
-                                mandatoryFieldsFilled = false;
-                                allFieldsValid = false;
-                            }
+                inputs.forEach(function (input) {
+                    if ((input.name === 'sourceDir') || (input.name === 'searchText') || input.name.includes('secondarySearchText')) {
+                        if (!input.value || (input.value.trim() === '')) {
+                            input.closest('.wrap-inner').style.borderColor = 'red';
+                            mandatoryFieldsFilled = false;
+                            allFieldsValid = false;
                         }
-                    });
-
-                    if ((!primaryCustomTags || !primaryCustomTags.value || primaryCustomTags.value.trim() === '') &&
-                        (!targetDir.value || targetDir.value.trim() === '')) {
-                        targetDir.closest('.wrap-inner').style.borderColor = 'red';
-                        primaryTagListWrap.style.borderColor = 'red';
-                        mandatoryFieldsFilled = false;
-                        allFieldsValid = false;
-                    }
-
-                    if (searchArea.querySelector('.secondariesContainer div')) {
-                        var secondaries = document.querySelectorAll('.secondariesContainer div.secondary');
-                        secondaries.forEach(function (secondary) {
-                            var secondaryCustomTags = secondary.querySelector('input[name="secondaryCustomTags[]"]');
-                            var subTargetDir = secondary.querySelector('input[name="subTargetDir[]"]');
-                            var secondaryTagListWrap = secondary.querySelector('.secondary-tag-list').closest('.wrap-inner');
-
-                            if ((!secondaryCustomTags || !secondaryCustomTags.value || secondaryCustomTags.value.trim() === '') &&
-                                (!subTargetDir.value || subTargetDir.value.trim() === '')) {
-                                subTargetDir.closest('.wrap-inner').style.borderColor = 'red';
-                                secondaryTagListWrap.style.borderColor = 'red';
-                                mandatoryFieldsFilled = false;
-                                allFieldsValid = false;
-                            }
-                        });                        
                     }
                 });
-            
+
+                if ((!primaryCustomTags || !primaryCustomTags.value || primaryCustomTags.value.trim() === '') &&
+                    (!targetDir.value || targetDir.value.trim() === '')) {
+                    targetDir.closest('.wrap-inner').style.borderColor = 'red';
+                    primaryTagListWrap.style.borderColor = 'red';
+                    mandatoryFieldsFilled = false;
+                    allFieldsValid = false;
+                }
+
+                if (searchArea.querySelector('.secondariesContainer div')) {
+                    var secondaries = document.querySelectorAll('.secondariesContainer div.secondary');
+                    secondaries.forEach(function (secondary) {
+                        var secondaryCustomTags = secondary.querySelector('input[name="secondaryCustomTags[]"]');
+                        var subTargetDir = secondary.querySelector('input[name="subTargetDir[]"]');
+                        var secondaryTagListWrap = secondary.querySelector('.secondary-tag-list').closest('.wrap-inner');
+
+                        if ((!secondaryCustomTags || !secondaryCustomTags.value || secondaryCustomTags.value.trim() === '') &&
+                            (!subTargetDir.value || subTargetDir.value.trim() === '')) {
+                            subTargetDir.closest('.wrap-inner').style.borderColor = 'red';
+                            secondaryTagListWrap.style.borderColor = 'red';
+                            mandatoryFieldsFilled = false;
+                            allFieldsValid = false;
+                        }
+                    });
+                }
+            });
+
 
             if (!allFieldsValid) {
                 console.log('Please fill in all required fields!');
@@ -311,7 +473,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             return allFieldsValid;
         }
 
-        function startProcessing() {
+        async function startProcessing() {
             var sourceDirInput = document.body.querySelectorAll('input[name="sourceDir"]')[0];
             const sourceDir = sourceDirInput.value;
 
@@ -326,6 +488,8 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             dropdownValues["tags"] = dropdownValues["tags"].sort();
             const jsonData = tagHistoryVals ? dropdownValues : null;
 
+            disableInteraction();
+            
             fetch('/process-files', {
                 method: 'POST',
                 headers: {
@@ -335,26 +499,27 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             })
                 .then(response => response.json())
                 .then(data => {
-                    displayResults(data.results);
+                    displayResults(data.results);                    
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('Error:', error);                    
+                    enableInteraction();
                 });
 
-            
+            const valueSourceDir = document.getElementById('jsonSourceDir').value;
             const valueSearchText = document.getElementById('jsonSearchText').value;
             const valueTargetDir = document.getElementById('jsonTargetDir').value;
             const valueSubTargetDir = document.getElementById('jsonSubTargetDir').value;
             const valuesecondarySearchText = document.getElementById('jsonsecondarySearchText').value;
 
-            dropdownValues.sourceDir = sourceDir ? sourceDir.split(',') : [];
+            dropdownValues.sourceDir = valueSourceDir ? valueSourceDir.split(',') : [];
             dropdownValues.searchText = valueSearchText ? valueSearchText.split(',') : [];
             dropdownValues.targetDir = valueTargetDir ? valueTargetDir.split(',') : [];
             dropdownValues.subTargetDir = valueSubTargetDir ? valueSubTargetDir.split(',') : [];
             dropdownValues.secondarySearchText = valuesecondarySearchText ? valuesecondarySearchText.split(',') : [];
 
-            let dropdownFileData = fetchData();
-            // boş eleman kontrolü buraya gelinmeden yapılmalı
+            let dropdownFileData = fetchTagHistory();
+
             dropdownFileData.tags = Array.from(new Set(dropdownValues.tags.concat(dropdownFileData.tags)))
                 .filter(item => !!item).sort();
 
@@ -373,7 +538,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             dropdownFileData.secondarySearchText = Array.from(new Set(dropdownValues.secondarySearchText.concat(dropdownFileData.secondarySearchText)))
                 .filter(item => !!item).sort();
 
-            fetch('/save-lists', {
+            fetch('/save-dropdown-lists', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -382,35 +547,40 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Data:', data);
+                    console.log('Data:', data);                    
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('Error:', error);                    
+                    enableInteraction();
                 });
+            enableInteraction();
+        }
+
+        async function delayProcessing(ms) {
+            console.log('İşlem başladı...');
+            await new Promise(resolve => setTimeout(resolve, ms));
+            console.log(`${ms} mili saniye geçti, işlem devam ediyor...`);
         }
 
         function collectSearchParams() {
 
             const searchAreas = document.querySelectorAll('.spawnableSearchArea');
             return Array.from(searchAreas).map((area, index) => {
-                // Collect primary search criteria
+
                 const searchText = area.querySelector('[name="searchText"]').value;
                 const targetDir = area.querySelector('[name="targetDir"]').value;
 
-                // Collect secondary search criteria
                 const secondarySearchTexts = Array.from(area.querySelectorAll('[name="secondarySearchText[]"]')).map(input => input.value);
                 const subTargetDirs = Array.from(area.querySelectorAll('[name="subTargetDir[]"]')).map(input => input.value);
                 const secondaryCustomTagArr = Array.from(area.querySelectorAll('[name="secondaryCustomTags[]"]')).map(input => input.value);
-                
+
                 const checkpointChecked = area.querySelector('[name="checkpointCheckName"]').checked ? 'addCheckpoints' : ''
                 const loraChecked = area.querySelector('[name="loraCheckName"]').checked ? 'addLoras' : ''
 
-
-                // Combine secondary search criteria and sub-target directories
                 const secondaries = secondarySearchTexts.map((text, i) => ({
                     secondarySearchText: text,
                     subTargetDir: subTargetDirs[i] || '',
-                    secondaryCustomTags: secondaryCustomTagArr[i] || '', // Send an empty string if there's no secondary tag
+                    secondaryCustomTags: secondaryCustomTagArr[i] || '',
                 }));
                 console.log('index html secondaries:' + secondaries);
                 // Collect file tags
@@ -418,20 +588,22 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
                 console.log('index html primaryCustomTags:' + primaryCustomTags + ' secondaryCustomTags:' + secondaryCustomTagArr.join(','))
 
                 return {
-                    id: index, // Unique ID for each search area
+                    id: index,
                     searchText: searchText,
                     targetDir: targetDir,
-                    secondaries: secondaries, // Array containing secondary search criteria and sub-target directories
+                    secondaries: secondaries,
                     primaryCustomTags: primaryCustomTags,
                     checkpointChecked: checkpointChecked,
                     loraChecked: loraChecked,
+                    "area": area.parentElement.id,
                 };
             });
         }
 
         function displayResults(results) {
             results.forEach(result => {
-                const resultElement = document.getElementById(`results-${result.id}`);
+                const searchArea = document.getElementById(result.area);
+                const resultElement = searchArea.querySelector(`.results`);
                 if (result.error) {
                     resultElement.innerHTML = `Error: ${result.error}`;
                 } else {
@@ -455,7 +627,7 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
                 <div style="display: flex;" class="flex-container secondary">
                     <div class="flex-item">
                         <div>
-                            <span>Secondary Text to Search (Case Sensitive)</span>    
+                            <span>Secondary Text to Search</span>    
                             <div class="wrap-inner sd-auto-1">
                                     <input class="border-none sd-auto-1 dd-guide" id="secondarySearchText" autocomplete="off" type="text" name="secondarySearchText[]"
                                     title="If the first text is found in the png, enter the other text you want to be searched for." >
@@ -477,7 +649,7 @@ This folder is a subfolder of the folder associated with the priority search tex
 If the folder name is not found, it is created. 
 example: FolderName\\OtherFolder
 The full path should not be entered. If more than one of the searched secondary texts is found in a png, 
-the file is moved only to the folder associated with the first text found. Files are not copied, only moved.">
+the file is moved only to the folder associated with the last text found. Files are not copied, only moved.">
                                     <svg class="dropdown-arrow sd-auto-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
                                         <path d="M5 8l4 4 4-4z"></path>
                                     </svg>
@@ -506,8 +678,6 @@ the file is moved only to the folder associated with the first text found. Files
             appendTagList(parentSearchAreaId, newSecondary.getElementsByClassName('secondary-tag-container')[0], order);
 
             initializeUlDropdown();
-
-            // addClickEventListenerToWrappers (newSecondary);
         }
 
         function removeThisSecondary(event) {
@@ -525,7 +695,6 @@ the file is moved only to the folder associated with the first text found. Files
             modal.style.display = 'flex'; // Make the modal visible
 
             const frame = document.getElementById('fileFrame');
-            // Set the `src` of `iframe` to `image-viewer.html` with query parameter
             frame.src = `image-viewer.html?imagePath=${encodeURIComponent(imagePath)}`;
         }
 
@@ -579,8 +748,43 @@ the file is moved only to the folder associated with the first text found. Files
                 iframe.style.width = '100%'; // Set iframe width to match modal-content
                 iframe.style.height = '100%'; // Set iframe height to match modal-content
             }
-        }, false);        
-        
+        }, false);
+
+        function disableInteraction() {
+            document.body.classList.add('disable-interaction');
+            document.getElementById('overlay').style.display = 'flex';
+            document.body.addEventListener('click', preventInteraction, true);
+            document.body.addEventListener('mousedown', preventInteraction, true);
+            document.body.addEventListener('mouseup', preventInteraction, true);
+            document.body.addEventListener('keydown', preventInteraction, true);
+            document.body.addEventListener('keyup', preventInteraction, true);
+            document.body.addEventListener('keypress', preventInteraction, true);
+        }
+
+        function enableInteraction() {
+            document.body.classList.remove('disable-interaction');
+            document.getElementById('overlay').style.display = 'none';
+            document.body.removeEventListener('click', preventInteraction, true);
+            document.body.removeEventListener('mousedown', preventInteraction, true);
+            document.body.removeEventListener('mouseup', preventInteraction, true);
+            document.body.removeEventListener('keydown', preventInteraction, true);
+            document.body.removeEventListener('keyup', preventInteraction, true);
+            document.body.removeEventListener('keypress', preventInteraction, true);
+        }
+
+        function preventInteraction(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+
+        function disablePage() {
+            document.body.classList.add('disable-interactions');
+        }
+
+        function enablePage() {
+            document.body.classList.remove('disable-interactions');
+        }
+
     </script>
 
 </body>

@@ -299,6 +299,10 @@ class TagList extends HTMLElement {
     this.tagsFromDb = e.detail;
   }
 
+  handleSelectedTagUpdate(e) {
+    this.selectedTags = e.detail;
+  }
+
   updateUserInteraction(newData) {
     updateTagHistory(this.tagsFromDb);
   }
@@ -321,7 +325,7 @@ class TagList extends HTMLElement {
 
   disconnectedCallback() {
     window.removeEventListener('tagsHistoryUpdated', this.handleDataUpdate.bind(this));
-    window.removeEventListener('selectedTagsUpdated', this.handleDataUpdate.bind(this));
+    window.removeEventListener('selectedTagsUpdated', this.handleSelectedTagUpdate.bind(this));
     window.removeEventListener('resize', this.boundPositionTagList);
     window.removeEventListener('scroll', this.boundPositionTagList);
 

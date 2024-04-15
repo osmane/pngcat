@@ -5,6 +5,7 @@
     "Art deco",
     "Art nouveau",
     "Baroque",
+    "Celebrity",
     "Celestial bodies",
     "Charcoal sketch",
     "Concept art",
@@ -39,9 +40,11 @@
     "Retro futurism",
     "Robot portrait",
     "Shadowy figure",
+    "Singer",
     "Snowy landscape",
     "Surreal art",
     "Surrealism",
+    "Turkish",
     "Türk",
     "Warrior pose",
     "Watercolor",
@@ -59,11 +62,17 @@
     "pale skin",
     "salvia",
     "seray kaya",
+    "textual",
+    "türk",
     "woman",
     "Öykü Gürman",
-    "Şarkıcı"
+    "Şarkıcı",
+    "şarkıcı"
   ],
   "sourceDir": [
+    "C:\\StableDiffusion\\a111\\outputs\\extras-images",
+    "C:\\StableDiffusion\\a111\\outputs\\extras-images\\EbruGundesExt",
+    "C:\\StableDiffusion\\a111\\outputs\\extras-images\\OykuGurmanExt",
     "D:\\temp\\source"
   ],
   "searchText": [
@@ -73,12 +82,15 @@
     "OykuGurman01",
     "SerayKaya01",
     "aslihangurbuz01",
+    "ebrugundes",
     "muge anli",
     "zubeydelokmanoglu01"
   ],
   "targetDir": [
     "C:\\StableDiffusion\\a111\\outputs\\extras-images\\EbruGundesExt",
+    "C:\\StableDiffusion\\a111\\outputs\\extras-images\\EbruGundesExt\\Fuck",
     "C:\\StableDiffusion\\a111\\outputs\\extras-images\\EceSeckinExt",
+    "C:\\StableDiffusion\\a111\\outputs\\extras-images\\NagehanAlciExt",
     "C:\\StableDiffusion\\a111\\outputs\\extras-images\\OykuGurmanExt",
     "C:\\StableDiffusion\\a111\\outputs\\extras-images\\ZubeydeLokmanogluExt",
     "D:\\temp\\target",
@@ -98,13 +110,15 @@
     "mirror1",
     "mirror2",
     "nude",
-    "saxo"
+    "saxo",
+    "textual"
   ],
   "secondarySearchText": [
     "FaceDownThroat01",
     "Naked",
     "Nude",
     "Photorealistic",
+    "ebrugundes-100g",
     "focus on lips",
     "glow",
     "mirror",

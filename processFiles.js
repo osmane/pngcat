@@ -15,7 +15,6 @@ const secondaryCustomTagsArray = secondaryCustomTags ? stringToTagstring(seconda
 
 const primaryRegex = new RegExp(searchText, 'i')
 const loraRegex = /Lora hashes: \\"([^"]+)\\"/
-const sysTags = []
 
 const primaryCustomTagsArray = primaryCustomTags ? stringToTagstring(primaryCustomTags).split(',') : []
 
@@ -47,7 +46,7 @@ async function processFile (filePath) {
   try {
     console.log('processFile started...')
     var secondaryKeywords = []
-
+    const sysTags = []
     // Read metadata from a PNG file
 
     const result = await ep.readMetadata(filePath, ['-File:all']) // -j for json format output
@@ -61,14 +60,17 @@ async function processFile (filePath) {
     if (metadata) {
       // Convert metadata to string
 
-      const mdString = JSON.stringify(metadata)
-      // console.log(metadata.parameters )
+      const mdString = JSON.stringify(metadata)      
+      const positiveRegex = new RegExp(/^([\s\S]*?)\s*Negative prompt:/, 'i')
+      const positivePromt = metadata.parameters.match(positiveRegex)[0]
+      // console.log(positivePromt )
 
       // Primary and secondary text checks
-      if (metadata.parameters && metadata.parameters.match(primaryRegex)) {
+      if (positivePromt && positivePromt.match(primaryRegex)) {
         primaryFound = true
+        console.log('Primary text found: ' + searchText)
         secondarySearchTextArray.forEach((text, index) => {
-          if (mdString.match(new RegExp(text, 'i'))) {
+          if (positivePromt.match(new RegExp(text, 'i'))) {
             secondaryIndex = index
             secondaryKeywords = secondaryKeywords.concat(secondaryCustomTagsArray[index].split(','))
             console.log(`Secondary text found: ${text}`)
@@ -87,6 +89,8 @@ async function processFile (filePath) {
             sysTags.push(...match[1].split(', ').map(hash => 'Lora_' + hash.split(': ')[0]))
           }
         }
+      }else{
+        console.log('Warning! Primary text not found: ' + searchText + ' in ' + filePath + ' positivePromt: ' + positivePromt)
       }
 
       const mdJson = JSON.parse(mdString)
@@ -94,12 +98,12 @@ async function processFile (filePath) {
         currentKeywords = mdJson.Keywords || mdJson.keywords || mdJson['Keywords']
         console.log(`processFile, Current Keywords t1: ${JSON.stringify(currentKeywords)}`)
       } else {
-        console.log('processFile, Current Keywords: ' + mdJson)
+        //console.log('processFile, Current Keywords: ' + mdJson)
       }
-      console.log(`processFile, Current mdjson: ${JSON.stringify(mdJson)}`)
+      //console.log(`processFile, Current mdjson: ${JSON.stringify(mdJson)}`)
     }
 
-    return { found: primaryFound, secondaryIndex, currentKeywords: currentKeywords, secondaryKeywords: secondaryKeywords}
+    return { found: primaryFound, secondaryIndex, currentKeywords: currentKeywords, secondaryKeywords: secondaryKeywords, sysTags: sysTags }
   } catch (error) {
     console.error(`Error: ${error}`)
     return { found: false }
@@ -138,12 +142,12 @@ async function processDirectory (directory) {
     let customTags = []
     if (fileExt === '.png') {
       try {
-        const { found, secondaryIndex, currentKeywords, secondaryKeywords } = await processFile(filePath)
+        const { found, secondaryIndex, currentKeywords, secondaryKeywords, sysTags } = await processFile(filePath)
         if (found) {
           let targetPath
           customTags = customTags.concat(primaryCustomTagsArray).concat(currentKeywords).concat(sysTags).concat(secondaryKeywords)
 
-          if (secondaryIndex >= 0) {
+          if ((secondaryIndex >= 0) && (!!subTargetDirsArray[secondaryIndex] )){
             // If a secondary search text is found, move the file to the corresponding sub-directory
             if (subTargetDirsArray[secondaryIndex] !== '') {
               targetPath = path.join(targetDir, subTargetDirsArray[secondaryIndex], path.basename(filePath))
@@ -155,6 +159,7 @@ async function processDirectory (directory) {
 
           if (targetDir || (!!targetDir && (targetDir !== filePath))) {
             // Check for filename conflict and generate a new filename
+            console.log(`processDirectory moving file to targetPath: ${targetPath}`)
             targetPath = await generateNewFileName(filePath, targetPath)
 
             await fsExtra.move(filePath, targetPath)
@@ -174,11 +179,11 @@ async function processDirectory (directory) {
               .then(console.log)
               .catch(console.error)
 
-            /*await ep.writeMetadata(targetPath, {
+            await ep.writeMetadata(targetPath, {
               "Keywords+": customTags,
             }, ['overwrite_original','codedcharacterset=utf8'])
               .then(console.log)
-              .catch(console.error)*/
+              .catch(console.error)
             } else {
               console.log('processDirectory, not Keywords found...')
             }

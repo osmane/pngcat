@@ -1,8 +1,8 @@
 const express = require('express')
+const fs = require('fs')
 const { spawn } = require('child_process')
 const path = require('path')
 const app = express()
-const fs = require('fs-extra')
 const jsonfile = require('jsonfile')
 const port = 3000
 
@@ -17,7 +17,7 @@ app.use(express.static('public'))
 const fileAccessMap = {}
 
 app.post('/process-files', (req, res) => {
-  const { sourceDir, searchParams, jsonData } = req.body
+  const { sourceDir, searchParams } = req.body
 
   const results = []
 
@@ -25,7 +25,7 @@ app.post('/process-files', (req, res) => {
     console.log('Server searchParams: ' + JSON.stringify(searchParams))    
 
     for (const params of searchParams) {
-      const { id, searchText, targetDir, secondaries, primaryCustomTags, checkpointChecked, loraChecked } = params
+      const { id, searchText, targetDir, secondaries, primaryCustomTags, checkpointChecked, loraChecked, area } = params
       const secondarySearchTexts = secondaries.map(sec => sec.secondarySearchText).join('|')
       const subTargetDirs = secondaries.map(sec => sec.subTargetDir).join('|')
       const secondaryCustomTags = secondaries.map(sec => sec.secondaryCustomTags).join('|')
@@ -47,6 +47,7 @@ app.post('/process-files', (req, res) => {
                   id,
                   totalProcessed: result.totalProcessed,
                   totalErrors: result.totalErrors,
+                  area: area,
                   movedFiles: result.movedFilesPaths.map(filePath => {
                     const fileId = generateSecureId()
                     fileAccessMap[fileId] = filePath // Store the file path
@@ -108,7 +109,7 @@ function generateSecureId() {
   return Math.random().toString(36).substring(2, 15)
 }
 
-app.get('/get-data', (req, res) => {
+app.get('/get-tag-history', (req, res) => {
   
   jsonfile.readFile('data/json-tags.json', 'utf8', (err, obj) => {
     if (err) {
@@ -122,7 +123,7 @@ app.get('/get-data', (req, res) => {
 
 });
 
-app.post('/save-lists', (req, res) => {
+app.post('/save-dropdown-lists', (req, res) => {
   const jsonData = req.body
   const results = []
   console.log('jsonData: ' + JSON.stringify(jsonData))
@@ -143,6 +144,53 @@ app.post('/save-lists', (req, res) => {
      results.push({ jsonDataError: 'jsonData empty or tags empty.' });
    }
   res.json({ results })
+});
+
+app.post('/save-preset', (req, res) => {
+  const {presetName, presetJson} = req.body
+  const results = []
+  console.log('presetJson: ' + JSON.stringify(presetJson))
+    jsonStr = JSON.stringify(presetJson)
+    console.log('presetJson: ' + jsonStr)
+   if (!!presetName && (presetName != 'json-tags') && !!presetJson && Object.keys(presetJson.searchParams).length > 0){
+     jsonfile.writeFile(`./data/presets/${presetName}.json`, presetJson, { spaces: 2 })
+       .then(() => {
+         console.log('JSON başarıyla kaydedildi.');
+         results.push({ jsonDataSaved: `${presetName}.json success ` });
+       })
+       .catch(err => {
+         console.error(`${presetName}.json kaydedilemedi:`, err);
+         results.push({ jsonDataError: `${presetName}.json kaydedilemedi:` });
+       });
+   }else{
+     console.error('jsonData empty or presetName empty or invalid file name.');
+     results.push({ jsonDataError: 'jsonData empty or presetName empty or invalid file name.' });
+   }
+  res.json({ results })
+});
+
+app.get('/list-presets', (req, res) => {
+  const dataDir = path.join(__dirname, 'data/presets');
+  fs.readdir(dataDir, (err, files) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Server error');
+    }
+    res.json(files);
+  });
+});
+
+app.get('/get-preset/:presetName', (req, res) => {
+  const {presetName} = req.params
+  jsonfile.readFile(`./data/presets/${presetName}`, 'utf8', (err, obj) => {
+    if (err) {
+      console.error('hata var bilader: ' + err);
+      return res.status(500).send('Dosya okunamadı.');
+    } else {
+      console.log('jsonData: ' + JSON.stringify(obj))
+    }
+    res.json(obj);
+  });
 });
 
 app.listen(port, () => {
