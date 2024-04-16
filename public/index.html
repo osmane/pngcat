@@ -489,22 +489,22 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             const jsonData = tagHistoryVals ? dropdownValues : null;
 
             disableInteraction();
-            
-            fetch('/process-files', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ sourceDir, searchParams, jsonData }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    displayResults(data.results);                    
-                })
-                .catch(error => {
-                    console.error('Error:', error);                    
-                    enableInteraction();
+
+            try {
+                const response = await fetch('/process-files', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sourceDir, searchParams, jsonData }),
                 });
+                const data = await response.json();
+                displayResults(data.results);
+            } catch (error) {
+                console.error('Error:', error);
+                enableInteraction();
+                return;
+            }
 
             const valueSourceDir = document.getElementById('jsonSourceDir').value;
             const valueSearchText = document.getElementById('jsonSearchText').value;
@@ -538,22 +538,21 @@ Therefore, for pngs that will contain common tags, please specify the folder pat
             dropdownFileData.secondarySearchText = Array.from(new Set(dropdownValues.secondarySearchText.concat(dropdownFileData.secondarySearchText)))
                 .filter(item => !!item).sort();
 
-            fetch('/save-dropdown-lists', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(dropdownFileData),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Data:', data);                    
-                })
-                .catch(error => {
-                    console.error('Error:', error);                    
-                    enableInteraction();
+            try {
+                const response = await fetch('/save-dropdown-lists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dropdownFileData),
                 });
-            enableInteraction();
+                const data = await response.json();
+                // console.log('Data:', data);
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                enableInteraction();
+            }
         }
 
         async function delayProcessing(ms) {
