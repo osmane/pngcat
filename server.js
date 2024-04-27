@@ -70,7 +70,7 @@ app.post('/process-files', (req, res) => {
         })
 
         process.stderr.on('data', (data) => {
-          console.error(`stderr: ${data}`)
+          console.error(`SEND: stderr: ${data}`)
         })
 
         process.on('close', (code) => {
