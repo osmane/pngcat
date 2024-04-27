@@ -33,9 +33,11 @@ Once the installation is complete, you can run the application with:
 
 npm start
 
+(or Run the start.bat file)
+
 This will start the server locally on the default port specified in the application. (http://localhost:3000/)
 
-4. Open the browser and enter localhost:3000
+Open the browser and enter localhost:3000
 
 ## Using
 
