@@ -1,4 +1,4 @@
-This node.js application scans the metadata (iTEX) information of png type images produced in a style similar to Stable Diffusion in a folder according to the parameters entered from the interface, and when the match entered in the interface is achieved, it moves the images to the matched folders. It provides a more flexible categorization opportunity by placing label information in png files if desired.
+This node.js application scans the metadata information of png type images produced in a style similar to Stable Diffusion PROMT in a folder according to the parameters entered from the interface, and when the match entered in the interface is achieved, it moves the images to the matched folders. It provides a more flexible categorization opportunity by placing label information in png files if desired.
 
 Many search rules can be defined in the interface at once, and all files can be moved to different folders and classified with a single click.
 
