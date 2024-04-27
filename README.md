@@ -1,4 +1,4 @@
-This node.js application scans the metadata information of png type images produced in a style similar to Stable Diffusion PROMT in a folder according to the parameters entered from the interface, and when the match entered in the interface is achieved, it moves the images to the matched folders. It provides a more flexible categorization opportunity by placing label information in png files if desired.
+This node.js application scans the metadata information of png type images produced in a style similar to **Stable Diffusion promt** in a folder according to the parameters entered from the interface, and when the match entered in the interface is achieved, it moves the images to the matched folders. It provides a more flexible categorization opportunity by placing label information in png files if desired.
 
 Many search rules can be defined in the interface at once, and all files can be moved to different folders and classified with a single click.
 
@@ -22,7 +22,7 @@ To install the application, follow these steps:
 git clone https://github.com/osmane/pngcat.git
 
 2. Navigate to the application's directory in command promt:
-example: cd pngcat
+for example: cd pngcat
 
 3. Install the required npm packages:
 npm install
@@ -43,5 +43,9 @@ Open the browser and enter localhost:3000
 
 There are necessary explanations in the tool tips of the controls in the application interface.
 
+After tagging, you can install the [**digiKam**](https://www.digikam.org/) application to use the filtering features according to tags.
+
 ## Notes: 
-The application is in beta phase
+The application is in **beta** phase
+
+The application only searches for the expressions you have entered into the interface on the text within the positive prompt of the PNG and performs folders and tags. it does not try to detect what is on the image using an artificial intelligence tool.
