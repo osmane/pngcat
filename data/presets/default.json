@@ -1,0 +1,21 @@
+{
+  "searchParams": [
+    {
+      "id": 0,
+      "searchText": "Flowers",
+      "targetDir": "C:\\StableDiffusion\\a1111\\outputs\\extras-images\\Flowers",
+      "secondaries": [
+        {
+          "secondarySearchText": "Butterfly",
+          "subTargetDir": "Butterfly",
+          "secondaryCustomTags": "Natura"
+        }
+      ],
+      "primaryCustomTags": "Abstract painting,Art nouveau,Dystopian society",
+      "checkpointChecked": "",
+      "loraChecked": "",
+      "area": "searchArea-0"
+    }
+  ],
+  "sourceDir": "C:\\StableDiffusion\\a1111\\outputs\\extras-images"
+}

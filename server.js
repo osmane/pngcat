@@ -110,17 +110,43 @@ function generateSecureId() {
 }
 
 app.get('/get-tag-history', (req, res) => {
-  
-  jsonfile.readFile('data/json-tags.json', 'utf8', (err, obj) => {
-    if (err) {
-      console.error('hata var bilader: ' + err);
-      return res.status(500).send('Dosya okunamadı.');
-    } else {
-      console.log('jsonData: ' + JSON.stringify(obj))
-    }
-    res.json(obj);
-  });
+  const jsonFilePath = 'data/json-tags.json';
+  const datFilePath = 'data/json-tags.dat';
 
+  jsonfile.readFile(jsonFilePath, 'utf8', (err, obj) => {
+    if (err) {
+      console.error('json-tags.json okunamadı, hata: ' + err);
+
+      jsonfile.readFile(datFilePath, 'utf8', (datErr, datObj) => {
+        if (datErr) {
+          console.error('json-tags.dat da bulunamadı, hata: ' + datErr);
+          
+          jsonfile.writeFile(jsonFilePath, {}, { spaces: 2 }, (writeErr) => {
+            if (writeErr) {
+              console.error('Boş json-tags.json oluşturulamadı, hata: ' + writeErr);
+              return res.status(500).send('Dosya oluşturulamadı.');
+            }
+            console.log('Boş json-tags.json başarıyla oluşturuldu.');
+            res.json({});
+          });
+        } else {
+          console.log('json-tags.dat bulundu ve okundu.');
+          
+          jsonfile.writeFile(jsonFilePath, datObj, { spaces: 2 }, (writeErr) => {
+            if (writeErr) {
+              console.error('json-tags.json olarak kopyalanamadı, hata: ' + writeErr);
+              return res.status(500).send('Dosya kopyalanamadı.');
+            }
+            console.log('json-tags.dat, json-tags.json olarak başarıyla kopyalandı.');
+            res.json(datObj);
+          });
+        }
+      });
+    } else {
+      console.log('json-tags.json başarıyla okundu.');
+      res.json(obj);
+    }
+  });
 });
 
 app.post('/save-dropdown-lists', (req, res) => {

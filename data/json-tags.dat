@@ -1,0 +1,80 @@
+{
+  "tags": [
+    "Abstract expressionism",
+    "Abstract painting",
+    "Actress",
+    "American",
+    "Art deco",
+    "Art nouveau",
+    "Baroque",
+    "Celestial bodies",
+    "Charcoal sketch",
+    "Concept art",
+    "Cosmic horror",
+    "Cubism",
+    "Deep Throat",
+    "Digital artwork",
+    "Digital illustration",
+    "Dystopian society",
+    "Flower closeup",
+    "Glowing sunset",
+    "Gothic",
+    "Gothic architecture",
+    "Haunted house",
+    "Impressionism",
+    "Line art",
+    "Lost city",
+    "Magical realism",
+    "Minimalist",
+    "Neon lights",
+    "Oil painting",
+    "Peaceful village",
+    "Photorealism",
+    "Photorealistic",
+    "Pixel art",
+    "Pop art",
+    "Renaissance",
+    "Retro futurism",
+    "Robot portrait",
+    "Shadowy figure",
+    "Snowy landscape",
+    "Speaker",
+    "Surreal art",
+    "Surrealism",
+    "Warrior pose",
+    "Watercolor",
+    "Wildlife photo",
+    "beauty portrait",
+    "glamour",
+    "instagram",
+    "textual",
+    "woman"
+  ],
+  "sourceDir": [
+    "C:\\StableDiffusion\\a1111\\outputs\\extras-images",
+    "D:\\temp\\source"
+  ],
+  "searchText": [
+    "Flower",
+    "ButterFly"    
+  ],
+  "targetDir": [
+    "C:\\StableDiffusion\\a1111\\outputs\\extras-images\\Flower",   
+    "D:\\temp\\target"
+  ],
+  "subTargetDir": [
+    "B",    
+    "Photorealistic",   
+    "mirror",
+    "mirror1",
+    "mirror2"    
+  ],
+  "secondarySearchText": [   
+    "mirror",   
+    "octanizer",
+    "pale skin",
+    "reflection",
+    "shadow",
+    "silhouette"
+  ]
+}
