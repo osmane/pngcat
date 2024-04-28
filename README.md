@@ -43,6 +43,8 @@ Open the browser and enter localhost:3000
 
 There are necessary explanations in the tool tips of the controls in the application interface.
 
+Since the tags assigned to the files with this application are kept directly in the png file rather than in a database, filtering and listing operations can be performed through tags by various image browser applications.
+
 After tagging, you can install the [**digiKam**](https://www.digikam.org/) application to use the filtering features according to tags.
 
 ## Notes: 
