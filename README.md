@@ -3,3 +3,8 @@ This node.js application scans the metadata (iTEX) information of png type image
 Many search rules can be defined in the interface at once, and all files can be moved to different folders and classified with a single click.
 
 Using image management applications that support tags, browsing through images via the tag system also provides great time savings and ease of access.
+
+![image](https://github.com/osmane/pngcat/assets/2101656/08c382bf-a8ad-4a8b-bd3d-ba5f68eb3bc7)
+
+The application is in beta phase
+
